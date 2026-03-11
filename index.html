@@ -1563,7 +1563,7 @@
     <div class="login-sub">Your private practice space</div>
     <div class="login-error" id="login-error"></div>
     <div class="section-label" style="margin-bottom:6px;">Username</div>
-    <input type="text" class="login-input" id="login-username" placeholder="e.g. yuexuan" autocomplete="off" autocapitalize="none">
+    <input type="text" class="login-input" id="login-username" placeholder="" autocomplete="off" autocapitalize="none">
     <div class="section-label" style="margin-bottom:6px;margin-top:14px;">PIN <span style="font-size:0.55rem;color:var(--muted);letter-spacing:0;">(4 digits)</span></div>
     <input type="password" class="login-input" id="login-pin" placeholder="••••" maxlength="4" inputmode="numeric">
     <button class="save-btn" style="margin-top:18px;" onclick="handleLogin()">Enter</button>
@@ -1777,11 +1777,10 @@ async function showApp() {
   await loadData();
   await loadGoals();
 
-  playYearAnimation(() => {
-    document.querySelector('.app').style.visibility = 'visible';
-    renderCalendar();
-    loadJournalForDate();
-  });
+  document.querySelector('.app').style.visibility = 'visible';
+  switchView('journal');
+  renderCalendar();
+  loadJournalForDate();
 }
 
 async function checkSession() {
@@ -2684,7 +2683,10 @@ function renderGoals() {
     const check = document.createElement('button');
     check.className = 'goal-check' + (g.done ? ' checked' : '');
     check.textContent = g.done ? '✓' : '';
-    check.onclick = () => toggleGoal(g.id);
+    check.onclick = () => {
+      if (!g.done) launchConfetti();
+      toggleGoal(g.id);
+    };
 
     const body = document.createElement('div');
     body.className = 'goal-body';
