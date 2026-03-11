@@ -751,6 +751,11 @@
     border-radius: 50%;
     margin: 0 auto;
   }
+  .ycal-mini-cell.has-goal { color: #b89a6a; font-weight: 500; }
+  .ycal-mini-cell.has-goal::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #b89a6a; }
+  .ycal-mini-cell.has-goal { position: relative; }
+  .ycal-mini-cell.has-goal-done::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #ccc; }
+  .ycal-mini-cell.has-goal-done { position: relative; }
 
   /* Month drill-down mode */
   #year-cal-body.month-mode {
@@ -813,6 +818,23 @@
     margin: 2px auto 0;
   }
   .ycal-full-cell.has-entry:not(.today):hover { background: var(--border); border-radius: 4px; }
+  .ycal-full-cell.has-goal::before {
+    content: '★';
+    position: absolute;
+    top: 1px; right: 3px;
+    font-size: 0.6rem;
+    color: #b89a6a;
+    line-height: 1;
+  }
+  .ycal-full-cell.has-goal { cursor: pointer; }
+  .ycal-full-cell.has-goal-done::before {
+    content: '★';
+    position: absolute;
+    top: 1px; right: 3px;
+    font-size: 0.6rem;
+    color: #ccc;
+    line-height: 1;
+  }
 
   /* Entries list below month grid */
   .ycal-entries {
@@ -1971,9 +1993,13 @@ function renderCalView() {
         const key = `${calViewYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isToday = d === now.getDate() && m === now.getMonth() && calViewYear === now.getFullYear();
         const hasEntry = entries[key] && (entries[key].blocks?.some(b => b.piece || b.note) || entries[key].recordings?.length);
+        const hasGoal = goals.some(g => g.date === key && !g.done);
+        const hasGoalDone = !hasGoal && goals.some(g => g.date === key && g.done);
         let cls = 'ycal-mini-cell';
         if (isToday) cls += ' today';
         if (hasEntry) cls += ' has-entry';
+        if (hasGoal) cls += ' has-goal';
+        else if (hasGoalDone) cls += ' has-goal-done';
         html += `<div class="${cls}">${d}</div>`;
       }
       html += `</div>`;
@@ -2020,10 +2046,15 @@ function renderCalView() {
       const key = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const isToday = d === now.getDate() && calViewMonth === now.getMonth() && calViewYear === now.getFullYear();
       const hasEntry = entries[key] && (entries[key].blocks?.some(b => b.piece || b.note) || entries[key].recordings?.length);
+      const hasGoal = goals.some(g => g.date === key && !g.done);
+      const hasGoalDone = !hasGoal && goals.some(g => g.date === key && g.done);
       const cell = document.createElement('div');
-      cell.className = 'ycal-full-cell' + (isToday ? ' today' : '') + (hasEntry ? ' has-entry' : '');
+      cell.className = 'ycal-full-cell'
+        + (isToday ? ' today' : '')
+        + (hasEntry ? ' has-entry' : '')
+        + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '');
       cell.innerHTML = `${d}${hasEntry ? '<span class="ycal-dot"></span>' : ''}`;
-      if (hasEntry) cell.onclick = () => openDayModal(key);
+      if (hasEntry || hasGoal) cell.onclick = () => openDayModal(key);
       grid.appendChild(cell);
     }
 
@@ -2076,7 +2107,9 @@ function switchView(view) {
   if (view === 'cal') { calViewYear = new Date().getFullYear(); calViewMonth = null; renderCalView(); }
 
   // Hide header calendar on Journal and Calendar views
-  document.getElementById('cal-section').style.display = (view === 'all' || view === 'cal') ? 'none' : '';
+  const isMobile = window.innerWidth <= 430;
+  const hideCal = view === 'all' || view === 'cal' || (isMobile && (view === 'journal' || view === 'goals'));
+  document.getElementById('cal-section').style.display = hideCal ? 'none' : '';
 }
 
 // ---- All Entries (Journal) ----
@@ -2323,18 +2356,20 @@ function addGoal() {
   document.getElementById('goal-date').value = '';
   closeGoalForm();
   renderCalendar();
+  if (typeof calViewMonth !== 'undefined') renderCalView();
   renderGoals();
 }
 
 function toggleGoal(id) {
   const g = goals.find(g => g.id === id);
-  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); renderGoals(); }
+  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); if (typeof calViewMonth !== 'undefined') renderCalView(); renderGoals(); }
 }
 
 function deleteGoal(id) {
   goals = goals.filter(g => g.id !== id);
   saveGoals();
   renderCalendar();
+  if (typeof calViewMonth !== 'undefined') renderCalView();
   renderGoals();
 }
 
