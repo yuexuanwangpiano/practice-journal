@@ -710,9 +710,13 @@
     max-width: 430px;
     background: var(--bg);
     border-radius: 12px 12px 0 0;
-    padding: 16px 24px 48px;
+    padding: 16px 24px 32px;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
     z-index: 900;
     transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 92dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .goal-sheet.open { transform: translateX(-50%) translateY(0); }
 
@@ -1003,6 +1007,66 @@
     color: var(--muted);
     letter-spacing: 0.06em;
   }
+  .day-modal-recordings-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #d4c9b5;
+  }
+  .day-modal-rec-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .day-modal-rec-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .day-modal-play-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #d4c9b5;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.65rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .day-modal-play-btn:hover { background: var(--text); color: var(--bg); }
+  .day-modal-rec-info { flex: 1; min-width: 0; }
+  .day-modal-rec-name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+  }
+  .day-modal-rec-progress {
+    height: 2px;
+    background: #e8dfd0;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .day-modal-rec-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 1px;
+    transition: width 0.1s linear;
+  }
+
   .day-modal-empty {
     font-size: 0.82rem;
     color: var(--muted);
@@ -1050,10 +1114,10 @@
         <div class="section-label">Recordings</div>
         <div class="upload-area" onclick="document.getElementById('file-input').click()">
           <div class="upload-icon">🎵</div>
-          <div class="upload-text">Tap to upload a recording</div>
-          <div class="upload-sub">MP3, M4A, WAV, AAC</div>
+          <div class="upload-text">Tap to add a recording</div>
+          <div class="upload-sub">Music library · Voice Memos · Files</div>
         </div>
-        <input type="file" id="file-input" accept="audio/*" onchange="handleFileUpload(event)">
+        <input type="file" id="file-input" accept="audio/*,.m4a,.mp3,.wav,.aac,.caf,.aiff" onchange="handleFileUpload(event)">
         <div class="recordings-list" id="recordings-list"></div>
       </div>
     </div>
@@ -1718,10 +1782,63 @@ function openDayModal(key) {
   }
 
   if (entry.recordings?.length) {
-    const rec = document.createElement('div');
-    rec.className = 'day-modal-recordings';
-    rec.textContent = `🎵 ${entry.recordings.length} recording${entry.recordings.length > 1 ? 's' : ''}`;
-    body.appendChild(rec);
+    const recSection = document.createElement('div');
+    recSection.className = 'day-modal-recordings-section';
+    recSection.innerHTML = `<div class="day-modal-rec-label">Recordings</div>`;
+
+    entry.recordings.forEach((rec, i) => {
+      const item = document.createElement('div');
+      item.className = 'day-modal-rec-item';
+
+      const audio = new Audio(rec.data);
+      let playing = false;
+
+      const playBtn = document.createElement('button');
+      playBtn.className = 'day-modal-play-btn';
+      playBtn.innerHTML = '▶';
+
+      const info = document.createElement('div');
+      info.className = 'day-modal-rec-info';
+      info.innerHTML = `<div class="day-modal-rec-name">${rec.name}</div>`;
+
+      const progress = document.createElement('div');
+      progress.className = 'day-modal-rec-progress';
+      const bar = document.createElement('div');
+      bar.className = 'day-modal-rec-bar';
+      progress.appendChild(bar);
+      info.appendChild(progress);
+
+      audio.addEventListener('timeupdate', () => {
+        if (audio.duration) bar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+      });
+      audio.addEventListener('ended', () => {
+        playing = false;
+        playBtn.innerHTML = '▶';
+        bar.style.width = '0%';
+      });
+
+      playBtn.addEventListener('click', () => {
+        if (playing) {
+          audio.pause();
+          playBtn.innerHTML = '▶';
+        } else {
+          // Pause any other playing audio in modal
+          document.querySelectorAll('.day-modal-rec-audio-playing').forEach(a => {
+            a.pause();
+            a.dataset.btnRef && document.getElementById(a.dataset.btnRef) && (document.getElementById(a.dataset.btnRef).innerHTML = '▶');
+          });
+          audio.play();
+          playBtn.innerHTML = '⏸';
+        }
+        playing = !playing;
+      });
+
+      item.appendChild(playBtn);
+      item.appendChild(info);
+      recSection.appendChild(item);
+    });
+
+    body.appendChild(recSection);
   }
 
   if (body.children.length === 0) {
@@ -1733,6 +1850,8 @@ function openDayModal(key) {
 
 function closeDayModal() {
   document.getElementById('day-modal-overlay').classList.remove('open');
+  // Stop any playing audio
+  document.querySelectorAll('.day-modal-play-btn').forEach(btn => btn.innerHTML = '▶');
 }
 
 function renderAll() {
@@ -1814,8 +1933,10 @@ function openBlockForm(index = null) {
 }
 
 function closeBlockForm() {
+  const sheet = document.getElementById('block-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
   document.getElementById('block-sheet-overlay').classList.remove('open');
-  document.getElementById('block-sheet').classList.remove('open');
 }
 
 function saveBlockFromSheet() {
@@ -1852,8 +1973,10 @@ function openGoalForm() {
 }
 
 function closeGoalForm() {
+  const sheet = document.getElementById('goal-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
   document.getElementById('goal-sheet-overlay').classList.remove('open');
-  document.getElementById('goal-sheet').classList.remove('open');
 }
 
 function addGoal() {
@@ -2021,6 +2144,19 @@ function renderGoals() {
     item.addEventListener('mouseleave', onEnd);
   });
 }
+
+// ---- iOS keyboard: shift sheets above keyboard ----
+function setupKeyboardShift() {
+  if (!window.visualViewport) return;
+  window.visualViewport.addEventListener('resize', () => {
+    const sheets = document.querySelectorAll('.goal-sheet.open');
+    const keyboardHeight = window.innerHeight - window.visualViewport.height;
+    sheets.forEach(sheet => {
+      sheet.style.bottom = keyboardHeight > 50 ? keyboardHeight + 'px' : '';
+    });
+  });
+}
+setupKeyboardShift();
 
 // ---- Init ----
 document.getElementById('login-pin').addEventListener('keydown', e => {
