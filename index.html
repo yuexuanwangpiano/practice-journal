@@ -2865,26 +2865,6 @@ function applyDatePicker() {
   loadJournalForDate();
 }
 
-  // Current month days
-  for (let d = 1; d <= daysInMonth; d++) {
-    const thisDate = new Date(dpDate.getFullYear(), dpDate.getMonth(), d);
-    const el = document.createElement('div');
-    let cls = 'cal-day';
-    if (d === today.getDate() && dpDate.getMonth() === today.getMonth() && dpDate.getFullYear() === today.getFullYear()) cls += ' today';
-    if (dateKey(thisDate) === dateKey(selectedDate)) cls += ' selected';
-    el.className = cls;
-    el.innerHTML = `<span class="cal-day-num">${d}</span>`;
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectedDate = thisDate;
-      closeDatePicker();
-      renderCalendar();
-      loadJournalForDate();
-    });
-    grid.appendChild(el);
-  }
-}
-
 function launchFirework() {
   const wrap = document.createElement('div');
   wrap.className = 'firework-wrap';
