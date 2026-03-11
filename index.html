@@ -676,6 +676,29 @@
   @media (pointer: coarse) {
     .block-date-row { display: block; }
   }
+  .block-date-selects {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .block-date-select {
+    flex: 1;
+    padding: 10px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+    cursor: pointer;
+  }
+  .block-date-select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
 
   .goal-color-picker {
     display: flex;
@@ -1541,8 +1564,12 @@
     <div class="goal-sheet" id="block-sheet">
       <div class="goal-sheet-handle"></div>
       <div class="block-date-row" id="block-date-row">
-        <div class="section-label" style="margin-bottom:6px;">Date</div>
-        <input type="date" id="block-sheet-date" class="goal-date-input" style="margin-bottom:16px;">
+        <div class="section-label" style="margin-bottom:8px;">Date</div>
+        <div class="block-date-selects">
+          <select id="block-date-month" class="block-date-select"></select>
+          <select id="block-date-day" class="block-date-select"></select>
+          <select id="block-date-year" class="block-date-select"></select>
+        </div>
       </div>
       <div class="section-label" style="margin-bottom:6px;">Piece</div>
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
@@ -2665,14 +2692,54 @@ function saveGoals() {
 
 let editingBlockIndex = null;
 
+function populateBlockDateSelects(date) {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const selM = document.getElementById('block-date-month');
+  const selD = document.getElementById('block-date-day');
+  const selY = document.getElementById('block-date-year');
+  if (!selM) return;
+
+  // Month options
+  selM.innerHTML = MONTHS.map((m,i) =>
+    `<option value="${i+1}" ${i === date.getMonth() ? 'selected' : ''}>${m}</option>`
+  ).join('');
+
+  // Day options — update when month changes
+  function fillDays(month, year, selectedDay) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    selD.innerHTML = Array.from({length: daysInMonth}, (_,i) =>
+      `<option value="${i+1}" ${i+1 === selectedDay ? 'selected' : ''}>${i+1}</option>`
+    ).join('');
+  }
+
+  // Year options: ±1 year range around today
+  const thisYear = new Date().getFullYear();
+  selY.innerHTML = [thisYear-1, thisYear, thisYear+1].map(y =>
+    `<option value="${y}" ${y === date.getFullYear() ? 'selected' : ''}>${y}</option>`
+  ).join('');
+
+  fillDays(date.getMonth() + 1, date.getFullYear(), date.getDate());
+
+  // When month or year changes, refresh day options
+  selM.onchange = () => fillDays(parseInt(selM.value), parseInt(selY.value), parseInt(selD.value) || 1);
+  selY.onchange = () => fillDays(parseInt(selM.value), parseInt(selY.value), parseInt(selD.value) || 1);
+}
+
+function getBlockDateFromSelects() {
+  const m = parseInt(document.getElementById('block-date-month').value);
+  const d = parseInt(document.getElementById('block-date-day').value);
+  const y = parseInt(document.getElementById('block-date-year').value);
+  return new Date(y, m - 1, d);
+}
+
 function openBlockForm(index = null) {
   editingBlockIndex = index;
   const entry = getEntry(selectedDate);
   const data = index !== null ? (entry.blocks?.[index] || {}) : {};
   document.getElementById('block-sheet-piece').value = data.piece || '';
   document.getElementById('block-sheet-note').value = data.note || '';
-  // Pre-fill date field with selectedDate (mobile only, hidden on desktop)
-  document.getElementById('block-sheet-date').value = dateKey(selectedDate);
+  // Pre-fill date selects with selectedDate (mobile only, hidden on desktop)
+  populateBlockDateSelects(selectedDate);
 
   // Show/hide delete button
   const delBtn = document.getElementById('block-sheet-delete');
@@ -2696,13 +2763,8 @@ function saveBlockFromSheet() {
   if (!piece && !note) return;
 
   // On mobile, respect the date the user picked; otherwise use selectedDate
-  const dateInput = document.getElementById('block-sheet-date');
-  const isMobileForm = window.matchMedia('(pointer: coarse)').matches && dateInput.value;
-  let saveDate = selectedDate;
-  if (isMobileForm && dateInput.value) {
-    const [y, m, d] = dateInput.value.split('-').map(Number);
-    saveDate = new Date(y, m - 1, d);
-  }
+  const isMobileForm = window.matchMedia('(pointer: coarse)').matches;
+  const saveDate = isMobileForm ? getBlockDateFromSelects() : selectedDate;
 
   const entry = getEntry(saveDate);
   if (!entry.blocks) entry.blocks = [];
