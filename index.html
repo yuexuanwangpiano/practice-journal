@@ -969,6 +969,7 @@
       <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
       <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:110px;"></textarea>
       <button class="save-btn" onclick="saveBlockFromSheet()" style="margin-top:12px;">Save</button>
+      <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
     </div>
 
     <!-- This Week View -->
@@ -1307,17 +1308,13 @@ function deleteBlock(index) {
 function renderBlocks(blocks) {
   const list = document.getElementById('blocks-list');
   list.innerHTML = '';
-  const items = blocks.length > 0 ? blocks : [{ piece: '', note: '' }];
-  items.forEach((b, i) => createBlockEl(b, i));
+  blocks.forEach((b, i) => createBlockEl(b, i));
 }
 
 function createBlockEl(data, index) {
   const list = document.getElementById('blocks-list');
   const block = document.createElement('div');
-  block.className = 'practice-block' + (data.saved ? ' is-saved' : '');
-
-  const piece = (data.piece || '').replace(/"/g, '&quot;');
-  const note = (data.note || '');
+  block.className = 'practice-block is-saved';
 
   block.innerHTML = `
     <div class="block-saved-view">
@@ -1325,21 +1322,11 @@ function createBlockEl(data, index) {
       ${data.note ? `<div class="block-saved-note">${data.note}</div>` : ''}
       <div class="block-saved-hint">Tap to edit</div>
     </div>
-    <div class="block-edit-view">
-      <div class="section-label" style="margin-bottom:6px;">Piece</div>
-      <input type="text" class="block-piece-input" placeholder="e.g. Chopin Ballade No. 1..." value="${piece}">
-      <div class="section-label" style="margin-top:12px; margin-bottom:6px;">Practice Notes</div>
-      <textarea class="block-note" placeholder="What did you work on? Techniques, breakthroughs...">${note}</textarea>
-      <div class="block-footer">
-        <button class="block-delete-btn" onclick="deleteBlock(${index})">Remove</button>
-        <button class="block-save-btn" onclick="saveBlock(${index})">Save</button>
-      </div>
-    </div>
   `;
 
-  // Tap saved view to re-open edit
+  // Tap to open sheet pre-filled for editing
   block.querySelector('.block-saved-view').addEventListener('click', () => {
-    block.classList.remove('is-saved');
+    openBlockForm(index);
   });
 
   list.appendChild(block);
@@ -1628,11 +1615,21 @@ function saveGoals() {
     .catch(e => console.error('Save goals failed', e));
 }
 
-function openBlockForm() {
+let editingBlockIndex = null;
+
+function openBlockForm(index = null) {
+  editingBlockIndex = index;
+  const entry = getEntry(selectedDate);
+  const data = index !== null ? (entry.blocks?.[index] || {}) : {};
+  document.getElementById('block-sheet-piece').value = data.piece || '';
+  document.getElementById('block-sheet-note').value = data.note || '';
+
+  // Show/hide delete button
+  const delBtn = document.getElementById('block-sheet-delete');
+  if (delBtn) delBtn.style.display = index !== null ? 'block' : 'none';
+
   document.getElementById('block-sheet-overlay').classList.add('open');
   document.getElementById('block-sheet').classList.add('open');
-  document.getElementById('block-sheet-piece').value = '';
-  document.getElementById('block-sheet-note').value = '';
   setTimeout(() => document.getElementById('block-sheet-piece').focus(), 350);
 }
 
@@ -1647,7 +1644,21 @@ function saveBlockFromSheet() {
   if (!piece && !note) return;
   const entry = getEntry(selectedDate);
   if (!entry.blocks) entry.blocks = [];
-  entry.blocks.push({ piece, note, saved: true });
+  if (editingBlockIndex !== null) {
+    entry.blocks[editingBlockIndex] = { piece, note, saved: true };
+  } else {
+    entry.blocks.push({ piece, note, saved: true });
+  }
+  setEntry(selectedDate, entry);
+  closeBlockForm();
+  renderCalendar();
+  renderBlocks(entry.blocks);
+}
+
+function deleteBlockFromSheet() {
+  if (editingBlockIndex === null) return;
+  const entry = getEntry(selectedDate);
+  entry.blocks.splice(editingBlockIndex, 1);
   setEntry(selectedDate, entry);
   closeBlockForm();
   renderCalendar();
@@ -1843,6 +1854,7 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 window.openBlockForm = openBlockForm;
 window.closeBlockForm = closeBlockForm;
 window.saveBlockFromSheet = saveBlockFromSheet;
+window.deleteBlockFromSheet = deleteBlockFromSheet;
 window.openGoalForm = openGoalForm;
 window.closeGoalForm = closeGoalForm;
 window.handleLogin = handleLogin;
