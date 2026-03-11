@@ -1119,7 +1119,8 @@
     padding-bottom: calc(32px + env(safe-area-inset-bottom));
     z-index: 900;
     transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    max-height: 92dvh;
+    max-height: 96dvh;
+    min-height: 70dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -1571,7 +1572,7 @@
       <div class="section-label" style="margin-bottom:6px;">Piece</div>
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
       <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
-      <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:80px;"></textarea>
+      <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:60px;"></textarea>
       <div id="block-sheet-actions" style="display:flex;gap:8px;margin-top:12px;">
         <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;flex:1;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
         <button class="save-btn" onclick="saveBlockFromSheet()" style="flex:1;margin-top:0;">Save</button>
@@ -1583,8 +1584,7 @@
     <div class="date-picker-panel" id="date-picker-panel" onclick="event.stopPropagation()">
       <div class="goal-sheet-handle"></div>
       <div class="section-label" style="margin-bottom:8px;">Select Date</div>
-      <input type="date" id="dp-date-input" class="goal-date-input" style="margin-bottom:16px;">
-      <button class="save-btn" onclick="applyDatePicker()">Go</button>
+      <input type="date" id="dp-date-input" class="goal-date-input" style="margin-bottom:4px;" onchange="applyDatePicker()">
     </div>
 
     <!-- This Week View -->
@@ -1632,7 +1632,7 @@
         <button class="goal-color-btn" data-color="#9b59b6" style="background:#9b59b6;" title="Purple" onclick="selectGoalColor(this)"></button>
       </div>
       <div class="section-label" style="margin-bottom:8px;margin-top:16px;">Goal</div>
-      <textarea class="note-area" id="goal-input" placeholder="e.g. Learn the Chopin Ballade No.1, perfect the Coda section..." style="min-height:100px;"></textarea>
+      <textarea class="note-area" id="goal-input" placeholder="e.g. Learn the Chopin Ballade No.1, perfect the Coda section..." style="min-height:60px;"></textarea>
       <div id="goal-date-error" style="color:#c0392b;font-size:0.78rem;margin-top:8px;display:none;"></div>
       <button class="save-btn" onclick="addGoal()" style="margin-top:12px;">Add Goal</button>
     </div>
@@ -2845,9 +2845,12 @@ function deleteGoal(id) {
 
 function openDatePicker() {
   if (window.matchMedia('(pointer: fine)').matches) return;
-  document.getElementById('dp-date-input').value = dateKey(selectedDate);
+  const input = document.getElementById('dp-date-input');
+  input.value = dateKey(selectedDate);
   document.getElementById('date-picker-overlay').classList.add('open');
   document.getElementById('date-picker-panel').classList.add('open');
+  // Auto-open the native date picker after the panel animates in
+  setTimeout(() => { try { input.showPicker(); } catch(e) { input.click(); } }, 350);
 }
 
 function closeDatePicker() {
