@@ -1576,7 +1576,8 @@
     <div class="goal-sheet" id="goal-sheet">
       <div class="goal-sheet-handle"></div>
       <div class="section-label" style="margin-bottom:8px;">Target Date</div>
-      <input type="date" id="goal-date" class="goal-date-input" style="margin-bottom:16px;">
+      <input type="date" id="goal-date" class="goal-date-input" style="margin-bottom:8px;" onchange="checkGoalDateConflict()">
+      <div id="goal-date-warning" style="color:#c0392b;font-size:0.78rem;margin-bottom:10px;min-height:1em;"></div>
       <div class="section-label" style="margin-bottom:8px;">Star Color</div>
       <div class="goal-color-picker" id="goal-color-picker">
         <button class="goal-color-btn selected" data-color="#b89a6a" style="background:#b89a6a;" title="Gold" onclick="selectGoalColor(this)"></button>
@@ -1587,6 +1588,7 @@
       </div>
       <div class="section-label" style="margin-bottom:8px;margin-top:16px;">Goal</div>
       <textarea class="note-area" id="goal-input" placeholder="e.g. Learn the Chopin Ballade No.1, perfect the Coda section..." style="min-height:100px;"></textarea>
+      <div id="goal-date-error" style="color:#c0392b;font-size:0.78rem;margin-top:8px;display:none;"></div>
       <button class="save-btn" onclick="addGoal()" style="margin-top:12px;">Add Goal</button>
     </div>
 
@@ -2724,6 +2726,17 @@ function closeGoalForm() {
   sheet.classList.remove('open');
   sheet.style.bottom = '';
   document.getElementById('goal-sheet-overlay').classList.remove('open');
+  document.getElementById('goal-date-warning').textContent = '';
+}
+
+function checkGoalDateConflict() {
+  const date = document.getElementById('goal-date').value;
+  const warn = document.getElementById('goal-date-warning');
+  if (date && goals.some(g => g.date === date)) {
+    warn.textContent = 'A goal already exists for this date.';
+  } else {
+    warn.textContent = '';
+  }
 }
 
 function selectGoalColor(btn) {
@@ -2735,6 +2748,10 @@ function addGoal() {
   const text = document.getElementById('goal-input').value.trim();
   const date = document.getElementById('goal-date').value;
   if (!text) return;
+  if (date && goals.some(g => g.date === date)) {
+    document.getElementById('goal-date-warning').textContent = 'A goal already exists for this date.';
+    return;
+  }
   const colorBtn = document.querySelector('.goal-color-btn.selected');
   const color = colorBtn ? colorBtn.dataset.color : '#b89a6a';
   goals.push({ id: Date.now(), text, date, done: false, color });
@@ -3034,6 +3051,7 @@ window.deleteRecording = deleteRecording;
 window.addRecordingLink = addRecordingLink;
 window.addGoal = addGoal;
 window.selectGoalColor = selectGoalColor;
+window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
 window.launchFirework = launchFirework;
