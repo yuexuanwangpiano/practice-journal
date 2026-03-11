@@ -40,6 +40,7 @@
     margin: 0 auto;
     background: var(--bg);
     position: relative;
+    visibility: hidden;
   }
 
   /* ---- Header ---- */
@@ -142,6 +143,11 @@
   .cal-day.selected { background: var(--accent); color: #fff; }
   .cal-day.selected:hover { background: var(--accent); }
 
+  .cal-day-num {
+    position: relative;
+    z-index: 1;
+  }
+
   .cal-day.has-entry::after {
     content: '';
     position: absolute;
@@ -161,15 +167,31 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 2.2rem;
+    font-size: 1.6rem;
     color: var(--gold);
-    opacity: 0.25;
+    opacity: 1;
     line-height: 1;
     pointer-events: none;
     z-index: 0;
   }
   .cal-day.has-goal { z-index: 0; }
-  .cal-day.selected.has-goal::before { color: rgba(255,255,255,0.35); }
+  .cal-day.selected.has-goal::before { color: rgba(255,255,255,0.6); }
+
+  .cal-day.has-goal-done::before {
+    content: '★';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.6rem;
+    color: #ccc;
+    opacity: 1;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .cal-day.has-goal-done { z-index: 0; }
+  .cal-day.selected.has-goal-done::before { color: rgba(255,255,255,0.4); }
 
   .cal-day.other-month { color: var(--border); cursor: default; }
 
@@ -217,6 +239,140 @@
   }
   .note-area:focus { border-color: var(--accent); }
   .note-area::placeholder { color: var(--border); }
+  .practice-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: background 0.3s, padding 0.3s;
+  }
+
+  .practice-block.is-saved {
+    background: #f5f0e8;
+    border-color: #e0d5c0;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+
+  .block-saved-view {
+    display: none;
+  }
+  .practice-block.is-saved .block-saved-view {
+    display: block;
+  }
+  .practice-block.is-saved .block-edit-view {
+    display: none;
+  }
+
+  .block-saved-piece {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .block-saved-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .block-saved-hint {
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c8b89a;
+    margin-top: 6px;
+  }
+
+  .block-piece-input {
+    width: 100%;
+    padding: 8px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+    outline: none;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .block-piece-input:focus { border-bottom-color: var(--accent); }
+  .block-piece-input::placeholder { color: var(--border); font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 300; }
+
+  .block-note {
+    width: 100%;
+    min-height: 100px;
+    background: transparent;
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.86rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--text);
+    resize: none;
+    outline: none;
+  }
+  .block-note::placeholder { color: var(--border); }
+
+  .block-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .block-save-btn {
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+  .block-save-btn:hover { background: #444; }
+  .block-save-btn.saved { background: #6a8c6a; }
+
+  .block-delete-btn {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    color: var(--muted);
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    padding: 6px 0;
+    transition: color 0.2s;
+  }
+  .block-delete-btn:hover { color: #c0392b; }
+
+  .add-block-btn {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+  }
+  .add-block-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   .save-btn {
     width: 100%;
@@ -383,7 +539,24 @@
   }
   .recent-entry:hover { background: var(--soft); }
   .recent-date { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
-  .recent-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .recent-piece-line { font-size: 0.88rem; line-height: 1.6; }
+  .recent-piece-name { font-family: 'Cormorant Garamond', serif; font-size: 0.95rem; color: var(--text); }
+  .recent-piece-note { font-family: 'Jost', sans-serif; font-size: 0.78rem; color: var(--muted); margin-left: 4px; }
+
+  .all-pieces-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .all-piece-chip {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 10px;
+  }
 
   .empty-state {
     text-align: center;
@@ -418,20 +591,41 @@
   }
   .goal-date-input:focus { border-color: var(--accent); }
 
+  .goal-item-wrap {
+    position: relative;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+  .goal-item-delete-bg {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
   .goal-item {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 2px;
     padding: 14px;
-    margin-bottom: 8px;
     display: flex;
     gap: 12px;
     align-items: flex-start;
+    position: relative;
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+    will-change: transform;
+    touch-action: pan-y;
+    cursor: grab;
   }
-
-  .goal-item.done {
-    opacity: 0.5;
-  }
+  .goal-item.done { opacity: 0.5; }
+  .goal-item.swiping { transition: none; }
 
   .goal-check {
     width: 18px;
@@ -456,17 +650,195 @@
   .goal-due { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
   .goal-due.overdue { color: #c0392b; }
 
-  .goal-delete {
-    background: none;
-    border: none;
-    color: var(--border);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 2px 4px;
-    transition: color 0.2s;
-    flex-shrink: 0;
+  .goal-delete { display: none; }
+
+  .loading-screen {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
   }
-  .goal-delete:hover { color: #c0392b; }
+  .loading-screen.hidden { display: none; }
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Login Screen ---- */
+  .login-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+  }
+  .login-screen.visible { display: flex; }
+  .login-box {
+    width: 100%;
+    max-width: 340px;
+  }
+  .login-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .login-sub {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 36px;
+  }
+  .login-input {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text);
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-error {
+    font-size: 0.75rem;
+    color: #c0392b;
+    min-height: 18px;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+  .login-hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 14px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ---- Logout button ---- */
+  .logout-btn {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.5rem;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover { color: var(--text); border-color: var(--text); }
+
+  /* ---- Day Detail Modal ---- */
+  .day-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .day-modal-overlay.open {
+    display: flex;
+  }
+  .day-modal {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    max-height: 85dvh;
+    overflow-y: auto;
+    border-radius: 8px 8px 0 0;
+    padding: 28px 28px 48px;
+    background:
+      repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        #e8dfd0 31px,
+        #e8dfd0 32px
+      ),
+      linear-gradient(#faf6ef, #faf6ef);
+    background-color: #faf6ef;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .day-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 1.4rem;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .day-modal-date {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #d4c9b5;
+    letter-spacing: 0.04em;
+  }
+  .day-modal-block {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #d4c9b5;
+  }
+  .day-modal-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .day-modal-piece {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .day-modal-note {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 300;
+    color: #555;
+    line-height: 2;
+    white-space: pre-wrap;
+  }
+  .day-modal-recordings {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .day-modal-empty {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
 </style>
 </head>
 <body>
@@ -476,13 +848,19 @@
   <div class="header">
     <div class="header-top">
       <div class="app-title">Practice Journal</div>
-      <button class="today-btn" onclick="goToToday()">Today</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="login-username-label" id="header-username" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);"></span>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
     </div>
-    <div class="calendar">
+    <div class="calendar" id="cal-section">
       <div class="cal-nav">
         <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
         <div class="cal-month" id="cal-month-label"></div>
         <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+      </div>
+      <div style="text-align:right;margin-bottom:4px;">
+        <button class="today-btn" onclick="goToToday()">Today</button>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
     </div>
@@ -495,9 +873,11 @@
     <div class="view active" id="view-journal">
       <div class="selected-date" id="selected-date-label"></div>
 
-      <div class="section-label">Practice Notes</div>
-      <textarea class="note-area" id="note-area" placeholder="What did you work on today? Pieces, techniques, breakthroughs..."></textarea>
-      <button class="save-btn" id="save-btn" onclick="saveNote()">Save Note</button>
+      <div id="blocks-list"></div>
+
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="add-block-btn" onclick="addBlock()">+ Add</button>
+      </div>
 
       <div class="section-gap">
         <div class="section-label">Recordings</div>
@@ -511,22 +891,16 @@
       </div>
     </div>
 
-    <!-- Stats View -->
+    <!-- This Week View -->
     <div class="view" id="view-stats">
-      <div class="stats-header">Overview</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-        <div class="stat-card">
-          <div class="stat-num" id="stat-total">0</div>
-          <div class="stat-label">Total Entries</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-streak">0</div>
-          <div class="stat-label">Day Streak</div>
-        </div>
-      </div>
+      <div class="stats-header">This Week</div>
+      <div id="week-list"></div>
+    </div>
 
-      <div class="section-label" style="margin-bottom:10px;">Recent Entries</div>
-      <div id="recent-list"></div>
+    <!-- Journal View (all entries) -->
+    <div class="view" id="view-all">
+      <div class="stats-header">Journal</div>
+      <div id="all-entries-list"></div>
     </div>
 
     <!-- Goals View -->
@@ -536,8 +910,8 @@
       <!-- Add Goal Form -->
       <div class="goal-form">
         <div class="section-label" style="margin-bottom:8px;">New Goal</div>
+        <input type="date" id="goal-date" class="goal-date-input" style="margin-bottom:8px;">
         <textarea class="note-area" id="goal-input" placeholder="What do you want to achieve? (e.g. Learn the Chopin Ballade No.1, perfect the Coda section...)" style="min-height:90px;"></textarea>
-        <input type="date" id="goal-date" class="goal-date-input">
         <button class="save-btn" onclick="addGoal()" style="margin-top:8px;">Add Goal</button>
       </div>
 
@@ -550,12 +924,12 @@
   <!-- Bottom Nav -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-journal" onclick="switchView('journal')">
+      <div class="nav-icon">✏️</div>
+      <div class="nav-label">Log</div>
+    </button>
+    <button class="nav-item" id="nav-all" onclick="switchView('all')">
       <div class="nav-icon">📖</div>
       <div class="nav-label">Journal</div>
-    </button>
-    <button class="nav-item" id="nav-stats" onclick="switchView('stats')">
-      <div class="nav-icon">✦</div>
-      <div class="nav-label">Overview</div>
     </button>
     <button class="nav-item" id="nav-goals" onclick="switchView('goals')">
       <div class="nav-icon">🎯</div>
@@ -564,24 +938,154 @@
   </div>
 </div>
 
-<script>
+<!-- Login Screen -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-title">Practice Journal</div>
+    <div class="login-sub">Your private practice space</div>
+    <div class="login-error" id="login-error"></div>
+    <div class="section-label" style="margin-bottom:6px;">Username</div>
+    <input type="text" class="login-input" id="login-username" placeholder="e.g. yuexuan" autocomplete="off" autocapitalize="none">
+    <div class="section-label" style="margin-bottom:6px;margin-top:14px;">PIN <span style="font-size:0.55rem;color:var(--muted);letter-spacing:0;">(4 digits)</span></div>
+    <input type="password" class="login-input" id="login-pin" placeholder="••••" maxlength="4" inputmode="numeric">
+    <button class="save-btn" style="margin-top:18px;" onclick="handleLogin()">Enter</button>
+    <div class="login-hint">New username? We'll create your account automatically.</div>
+  </div>
+</div>
+
+<!-- Loading Screen -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="day-modal-overlay" id="day-modal-overlay" onclick="closeDayModal()">
+  <div class="day-modal" id="day-modal" onclick="event.stopPropagation()">
+    <div class="day-modal-close" onclick="closeDayModal()">×</div>
+    <div class="day-modal-date" id="day-modal-date"></div>
+    <div class="day-modal-body" id="day-modal-body"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBOrXnjslPsxFkbWJbbnMgBSyLQcnb95I8",
+  authDomain: "practice-journal-c15aa.firebaseapp.com",
+  projectId: "practice-journal-c15aa",
+  storageBucket: "practice-journal-c15aa.firebasestorage.app",
+  messagingSenderId: "232736966786",
+  appId: "1:232736966786:web:095d872a70336e152bcc9b"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 // ---- State ----
 let currentDate = new Date();
 let selectedDate = new Date();
 let entries = {};     // { 'YYYY-MM-DD': { note: '', recordings: [] } }
 let audioPlayers = {};
 
+// ---- Auth ----
+let currentUser = null;
+
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const pin = document.getElementById('login-pin').value.trim();
+  const errEl = document.getElementById('login-error');
+  const btn = document.querySelector('#login-screen .save-btn');
+  errEl.textContent = '';
+
+  if (!username) { errEl.textContent = 'Please enter a username.'; return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; return; }
+
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  try {
+    const userRef = doc(db, 'users', username);
+    const snap = await getDoc(userRef);
+
+    if (snap.exists()) {
+      // Existing user — verify PIN
+      if (snap.data().pin !== pin) {
+        errEl.textContent = 'Wrong PIN. Try again.';
+        btn.textContent = 'Enter'; btn.disabled = false;
+        return;
+      }
+    } else {
+      // New user — create account
+      await setDoc(userRef, { pin, createdAt: Date.now() });
+    }
+
+    currentUser = username;
+    localStorage.setItem('pj_session', username);
+    btn.textContent = 'Enter'; btn.disabled = false;
+    showApp();
+  } catch(e) {
+    errEl.textContent = 'Connection error. Check internet and try again.';
+    btn.textContent = 'Enter'; btn.disabled = false;
+  }
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('pj_session');
+  entries = {};
+  goals = [];
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-pin').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-screen').classList.add('visible');
+  document.querySelector('.app').style.visibility = 'hidden';
+}
+
+async function showApp() {
+  document.getElementById('login-screen').classList.remove('visible');
+  document.querySelector('.app').style.visibility = 'visible';
+  document.getElementById('header-username').textContent = currentUser;
+  await loadData();
+  await loadGoals();
+  renderCalendar();
+  loadJournalForDate();
+}
+
+async function checkSession() {
+  const saved = localStorage.getItem('pj_session');
+  if (saved) {
+    try {
+      const snap = await getDoc(doc(db, 'users', saved));
+      if (snap.exists()) {
+        currentUser = saved;
+        document.getElementById('loading-screen').classList.add('hidden');
+        showApp();
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('login-screen').classList.add('visible');
+  document.querySelector('.app').style.visibility = 'hidden';
+}
+
 // ---- Storage ----
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function loadData() {
-  try { entries = JSON.parse(localStorage.getItem('pj_entries') || '{}'); } catch(e) { entries = {}; }
+async function loadData() {
+  try {
+    const snap = await getDoc(doc(db, 'users', currentUser, 'data', 'entries'));
+    entries = snap.exists() ? (snap.data().entries || {}) : {};
+  } catch(e) { entries = {}; }
 }
 
-function saveData() {
-  localStorage.setItem('pj_entries', JSON.stringify(entries));
+async function saveData() {
+  try {
+    await setDoc(doc(db, 'users', currentUser, 'data', 'entries'), { entries });
+  } catch(e) { console.error('Save failed', e); }
 }
 
 function getEntry(d) {
@@ -629,7 +1133,7 @@ function renderCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const el = document.createElement('div');
     el.className = 'cal-day';
-    el.textContent = d;
+    el.innerHTML = `<span class="cal-day-num">${d}</span>`;
 
     const thisDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
     const key = dateKey(thisDate);
@@ -640,11 +1144,13 @@ function renderCalendar() {
     if (dateKey(thisDate) === dateKey(selectedDate)) {
       el.classList.add('selected');
     }
-    if (entries[key] && (entries[key].note || (entries[key].recordings && entries[key].recordings.length))) {
+    if (entries[key] && (entries[key].blocks?.some(b => b.note || b.piece) || (entries[key].recordings && entries[key].recordings.length))) {
       el.classList.add('has-entry');
     }
     if (goals.some(g => g.date === key && !g.done)) {
       el.classList.add('has-goal');
+    } else if (goals.some(g => g.date === key && g.done)) {
+      el.classList.add('has-goal-done');
     }
 
     el.onclick = () => selectDate(thisDate);
@@ -680,25 +1186,92 @@ function formatDateLabel(d) {
 function loadJournalForDate() {
   const entry = getEntry(selectedDate);
   document.getElementById('selected-date-label').textContent = formatDateLabel(selectedDate);
-  document.getElementById('note-area').value = entry.note || '';
-  document.getElementById('save-btn').className = 'save-btn';
-  document.getElementById('save-btn').textContent = 'Save Note';
+  renderBlocks(entry.blocks || []);
   renderRecordings(entry.recordings || []);
 }
 
-function saveNote() {
+function saveBlock(index) {
   const entry = getEntry(selectedDate);
-  entry.note = document.getElementById('note-area').value;
+  if (!entry.blocks) entry.blocks = [];
+  const blockEl = document.querySelectorAll('.practice-block')[index];
+  const piece = blockEl.querySelector('.block-piece-input').value;
+  const note = blockEl.querySelector('.block-note').value;
+  entry.blocks[index] = { piece, note, saved: true };
   setEntry(selectedDate, entry);
   renderCalendar();
 
-  const btn = document.getElementById('save-btn');
-  btn.textContent = 'Saved ✓';
-  btn.className = 'save-btn saved';
-  setTimeout(() => {
-    btn.textContent = 'Save Note';
-    btn.className = 'save-btn';
-  }, 2000);
+  // Update saved view content and collapse
+  blockEl.querySelector('.block-saved-piece').innerHTML = piece || '<span style="color:var(--border);font-family:Jost,sans-serif;font-size:0.8rem;">No piece</span>';
+  const noteEl = blockEl.querySelector('.block-saved-note');
+  if (noteEl) noteEl.textContent = note;
+  else if (note) {
+    const div = document.createElement('div');
+    div.className = 'block-saved-note';
+    div.textContent = note;
+    blockEl.querySelector('.block-saved-piece').after(div);
+  }
+  blockEl.classList.add('is-saved');
+}
+
+function deleteBlock(index) {
+  const entry = getEntry(selectedDate);
+  if (!entry.blocks) return;
+  entry.blocks.splice(index, 1);
+  setEntry(selectedDate, entry);
+  renderCalendar();
+  renderBlocks(entry.blocks);
+}
+
+function renderBlocks(blocks) {
+  const list = document.getElementById('blocks-list');
+  list.innerHTML = '';
+  const items = blocks.length > 0 ? blocks : [{ piece: '', note: '' }];
+  items.forEach((b, i) => createBlockEl(b, i));
+}
+
+function createBlockEl(data, index) {
+  const list = document.getElementById('blocks-list');
+  const block = document.createElement('div');
+  block.className = 'practice-block' + (data.saved ? ' is-saved' : '');
+
+  const piece = (data.piece || '').replace(/"/g, '&quot;');
+  const note = (data.note || '');
+
+  block.innerHTML = `
+    <div class="block-saved-view">
+      <div class="block-saved-piece">${data.piece || '<span style="color:var(--border);font-family:Jost,sans-serif;font-size:0.8rem;">No piece</span>'}</div>
+      ${data.note ? `<div class="block-saved-note">${data.note}</div>` : ''}
+      <div class="block-saved-hint">Tap to edit</div>
+    </div>
+    <div class="block-edit-view">
+      <div class="section-label" style="margin-bottom:6px;">Piece</div>
+      <input type="text" class="block-piece-input" placeholder="e.g. Chopin Ballade No. 1..." value="${piece}">
+      <div class="section-label" style="margin-top:12px; margin-bottom:6px;">Practice Notes</div>
+      <textarea class="block-note" placeholder="What did you work on? Techniques, breakthroughs...">${note}</textarea>
+      <div class="block-footer">
+        <button class="block-delete-btn" onclick="deleteBlock(${index})">Remove</button>
+        <button class="block-save-btn" onclick="saveBlock(${index})">Save</button>
+      </div>
+    </div>
+  `;
+
+  // Tap saved view to re-open edit
+  block.querySelector('.block-saved-view').addEventListener('click', () => {
+    block.classList.remove('is-saved');
+  });
+
+  list.appendChild(block);
+}
+
+function addBlock() {
+  const entry = getEntry(selectedDate);
+  if (!entry.blocks) entry.blocks = [];
+  entry.blocks.push({ piece: '', note: '' });
+  setEntry(selectedDate, entry);
+  renderBlocks(entry.blocks);
+  // scroll to new block
+  const blocks = document.querySelectorAll('.practice-block');
+  if (blocks.length) blocks[blocks.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- Recordings ----
@@ -805,47 +1378,41 @@ function formatSize(bytes) {
 
 // ---- Stats ----
 function renderStats() {
-  const keys = Object.keys(entries).filter(k => entries[k].note || (entries[k].recordings && entries[k].recordings.length));
-  document.getElementById('stat-total').textContent = keys.length;
+  const weekEl = document.getElementById('week-list');
+  weekEl.innerHTML = '';
 
-  // Streak
-  let streak = 0;
-  let check = new Date();
-  check.setHours(0,0,0,0);
-  while (true) {
-    const k = dateKey(check);
-    if (entries[k] && (entries[k].note || (entries[k].recordings && entries[k].recordings.length))) {
-      streak++;
-      check.setDate(check.getDate() - 1);
-    } else break;
+  const weekKeys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    weekKeys.push(dateKey(d));
   }
-  document.getElementById('stat-streak').textContent = streak;
+  const weekEntries = weekKeys.filter(k => entries[k] && (entries[k].note || entries[k].pieces?.length || entries[k].recordings?.length));
 
-  // Recent entries
-  const recent = document.getElementById('recent-list');
-  recent.innerHTML = '';
-  const sorted = keys.sort((a,b) => b.localeCompare(a)).slice(0, 10);
-
-  if (sorted.length === 0) {
-    recent.innerHTML = '<div class="empty-state"><div class="empty-icon">🎹</div><div>No entries yet.<br>Start journaling today!</div></div>';
+  if (weekEntries.length === 0) {
+    weekEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🎹</div><div>No entries this week yet.</div></div>';
     return;
   }
 
-  sorted.forEach(key => {
+  weekEntries.forEach(key => {
     const entry = entries[key];
     const d = new Date(key + 'T00:00:00');
     const el = document.createElement('div');
     el.className = 'recent-entry';
     el.innerHTML = `
-      <div class="recent-date">${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</div>
-      <div class="recent-text">${entry.note || (entry.recordings?.length ? `🎵 ${entry.recordings.length} recording(s)` : '')}</div>
+      <div class="recent-date">${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+      ${entry.pieces?.length
+        ? entry.pieces.map((p, i) => `<div class="recent-piece-line"><span class="recent-piece-name">${p}</span>${i === entry.pieces.length - 1 && entry.note ? `<span class="recent-piece-note"> — ${entry.note}</span>` : ''}</div>`).join('')
+        : entry.note ? `<div class="recent-piece-line"><span class="recent-piece-note">${entry.note}</span></div>`
+        : entry.recordings?.length ? `<div class="recent-piece-line"><span class="recent-piece-note">🎵 ${entry.recordings.length} recording(s)</span></div>` : ''
+      }
     `;
     el.onclick = () => {
       selectedDate = new Date(key + 'T00:00:00');
       currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
       switchView('journal');
     };
-    recent.appendChild(el);
+    weekEl.appendChild(el);
   });
 }
 
@@ -857,19 +1424,111 @@ function switchView(view) {
   document.getElementById(`nav-${view}`).classList.add('active');
 
   if (view === 'stats') renderStats();
+  if (view === 'all') renderAll();
   if (view === 'journal') { renderCalendar(); loadJournalForDate(); }
   if (view === 'goals') renderGoals();
+
+  // Hide calendar only on Journal view
+  document.getElementById('cal-section').style.display = view === 'all' ? 'none' : '';
+}
+
+// ---- All Entries (Journal) ----
+function openDayModal(key) {
+  const entry = entries[key];
+  const d = new Date(key + 'T00:00:00');
+  document.getElementById('day-modal-date').textContent =
+    d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const body = document.getElementById('day-modal-body');
+  body.innerHTML = '';
+
+  // Blocks (piece + note)
+  const blocks = entry.blocks?.filter(b => b.piece || b.note) || [];
+  // Legacy: pieces + note
+  const pieces = entry.pieces || [];
+  const legacyNote = entry.note || '';
+
+  if (blocks.length > 0) {
+    blocks.forEach(b => {
+      const div = document.createElement('div');
+      div.className = 'day-modal-block';
+      div.innerHTML = `
+        ${b.piece ? `<div class="day-modal-piece">${b.piece}</div>` : ''}
+        ${b.note ? `<div class="day-modal-note">${b.note}</div>` : ''}
+      `;
+      body.appendChild(div);
+    });
+  } else if (pieces.length > 0 || legacyNote) {
+    const div = document.createElement('div');
+    div.className = 'day-modal-block';
+    div.innerHTML = `
+      ${pieces.map(p => `<div class="day-modal-piece">${p}</div>`).join('')}
+      ${legacyNote ? `<div class="day-modal-note">${legacyNote}</div>` : ''}
+    `;
+    body.appendChild(div);
+  }
+
+  if (entry.recordings?.length) {
+    const rec = document.createElement('div');
+    rec.className = 'day-modal-recordings';
+    rec.textContent = `🎵 ${entry.recordings.length} recording${entry.recordings.length > 1 ? 's' : ''}`;
+    body.appendChild(rec);
+  }
+
+  if (body.children.length === 0) {
+    body.innerHTML = '<div class="day-modal-empty">No details recorded.</div>';
+  }
+
+  document.getElementById('day-modal-overlay').classList.add('open');
+}
+
+function closeDayModal() {
+  document.getElementById('day-modal-overlay').classList.remove('open');
+}
+
+function renderAll() {
+  const list = document.getElementById('all-entries-list');
+  list.innerHTML = '';
+
+  const keys = Object.keys(entries)
+    .filter(k => entries[k].note || entries[k].pieces?.length || entries[k].recordings?.length)
+    .sort((a, b) => b.localeCompare(a));
+
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🎹</div><div>No entries yet.<br>Start logging today!</div></div>';
+    return;
+  }
+
+  keys.forEach(key => {
+    const entry = entries[key];
+    const d = new Date(key + 'T00:00:00');
+    const el = document.createElement('div');
+    el.className = 'recent-entry';
+    el.innerHTML = `
+      <div class="recent-date">${d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      ${entry.pieces?.length
+        ? entry.pieces.map((p, i) => `<div class="recent-piece-line"><span class="recent-piece-name">${p}</span>${i === entry.pieces.length - 1 && entry.note ? `<span class="recent-piece-note"> — ${entry.note}</span>` : ''}</div>`).join('')
+        : entry.note ? `<div class="recent-piece-line"><span class="recent-piece-note">${entry.note}</span></div>`
+        : entry.recordings?.length ? `<div class="recent-piece-line"><span class="recent-piece-note">🎵 ${entry.recordings.length} recording(s)</span></div>` : ''
+      }
+    `;
+    el.onclick = () => openDayModal(key);
+    list.appendChild(el);
+  });
 }
 
 // ---- Goals ----
 let goals = [];
 
 function loadGoals() {
-  try { goals = JSON.parse(localStorage.getItem('pj_goals') || '[]'); } catch(e) { goals = []; }
+  return getDoc(doc(db, 'users', currentUser, 'data', 'goals'))
+    .then(snap => { goals = snap.exists() ? (snap.data().goals || []) : []; })
+    .catch(() => { goals = []; });
 }
 
 function saveGoals() {
-  localStorage.setItem('pj_goals', JSON.stringify(goals));
+  return setDoc(doc(db, 'users', currentUser, 'data', 'goals'), { goals })
+    .catch(e => console.error('Save goals failed', e));
 }
 
 function addGoal() {
@@ -896,11 +1555,29 @@ function deleteGoal(id) {
   renderGoals();
 }
 
+function launchConfetti() {
+  const wrap = document.createElement('div');
+  wrap.className = 'confetti-wrap';
+  document.body.appendChild(wrap);
+  const colors = ['#b89a6a','#2c2c2c','#c0392b','#f1c40f','#27ae60','#2980b9','#8e44ad'];
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width = (6 + Math.random() * 6) + 'px';
+    p.style.height = (6 + Math.random() * 10) + 'px';
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    wrap.appendChild(p);
+  }
+  setTimeout(() => wrap.remove(), 3500);
+}
+
 function renderGoals() {
   const list = document.getElementById('goals-list');
   list.innerHTML = '';
 
-  // Sort: undone first, then by date
   const sorted = [...goals].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     if (!a.date && !b.date) return 0;
@@ -918,6 +1595,16 @@ function renderGoals() {
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = g.date && g.date < today && !g.done;
 
+    // Wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'goal-item-wrap';
+
+    // Red delete background
+    const bg = document.createElement('div');
+    bg.className = 'goal-item-delete-bg';
+    bg.textContent = 'Delete';
+
+    // Goal item
     const item = document.createElement('div');
     item.className = 'goal-item' + (g.done ? ' done' : '');
 
@@ -932,7 +1619,6 @@ function renderGoals() {
     const text = document.createElement('div');
     text.className = 'goal-text' + (g.done ? ' done' : '');
     text.textContent = g.text;
-
     body.appendChild(text);
 
     if (g.date) {
@@ -943,23 +1629,100 @@ function renderGoals() {
       body.appendChild(due);
     }
 
-    const del = document.createElement('button');
-    del.className = 'goal-delete';
-    del.textContent = '×';
-    del.onclick = () => deleteGoal(g.id);
-
     item.appendChild(check);
     item.appendChild(body);
-    item.appendChild(del);
-    list.appendChild(item);
+    wrap.appendChild(bg);
+    wrap.appendChild(item);
+    list.appendChild(wrap);
+
+    // Swipe logic
+    let startX = 0, currentX = 0, swiping = false;
+    const DELETE_THRESHOLD = 80;
+    const DONE_THRESHOLD = 80;
+
+    function onStart(e) {
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      currentX = 0;
+      swiping = true;
+      item.classList.add('swiping');
+    }
+    function onMove(e) {
+      if (!swiping) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      currentX = x - startX;
+      item.style.transform = `translateX(${currentX}px)`;
+      // tint bg red (left) or gold (right)
+      if (currentX < 0) {
+        bg.style.background = '#c0392b';
+        bg.textContent = 'Delete';
+        bg.style.left = 'auto'; bg.style.right = '0';
+      } else {
+        bg.style.background = 'var(--gold)';
+        bg.textContent = '★ Done';
+        bg.style.right = 'auto'; bg.style.left = '0';
+      }
+    }
+    function onEnd() {
+      if (!swiping) return;
+      swiping = false;
+      item.classList.remove('swiping');
+      if (currentX <= -DELETE_THRESHOLD) {
+        item.style.transition = 'transform 0.2s ease';
+        item.style.transform = `translateX(-100%)`;
+        wrap.style.transition = 'max-height 0.3s ease, opacity 0.3s ease, margin-bottom 0.3s ease';
+        wrap.style.maxHeight = wrap.offsetHeight + 'px';
+        setTimeout(() => { wrap.style.maxHeight = '0'; wrap.style.opacity = '0'; wrap.style.marginBottom = '0'; }, 150);
+        setTimeout(() => deleteGoal(g.id), 400);
+      } else if (currentX >= DONE_THRESHOLD && !g.done) {
+        item.style.transition = 'transform 0.2s ease';
+        item.style.transform = `translateX(100%)`;
+        launchConfetti();
+        setTimeout(() => {
+          toggleGoal(g.id);
+        }, 2800);
+      } else {
+        item.style.transition = 'transform 0.2s ease';
+        item.style.transform = 'translateX(0)';
+      }
+    }
+
+    item.addEventListener('touchstart', onStart, { passive: true });
+    item.addEventListener('touchmove', onMove, { passive: true });
+    item.addEventListener('touchend', onEnd);
+    item.addEventListener('mousedown', onStart);
+    item.addEventListener('mousemove', onMove);
+    item.addEventListener('mouseup', onEnd);
+    item.addEventListener('mouseleave', onEnd);
   });
 }
 
 // ---- Init ----
-loadData();
-loadGoals();
-renderCalendar();
-loadJournalForDate();
+document.getElementById('login-pin').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+document.getElementById('login-username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-pin').focus();
+});
+
+// Expose functions to global scope (required for inline onclick handlers with type="module")
+window.handleLogin = handleLogin;
+window.logout = logout;
+window.switchView = switchView;
+window.goToToday = goToToday;
+window.changeMonth = changeMonth;
+window.selectDate = selectDate;
+window.addBlock = addBlock;
+window.saveBlock = saveBlock;
+window.deleteBlock = deleteBlock;
+window.handleFileUpload = handleFileUpload;
+window.deleteRecording = deleteRecording;
+window.addGoal = addGoal;
+window.toggleGoal = toggleGoal;
+window.deleteGoal = deleteGoal;
+window.openDayModal = openDayModal;
+window.closeDayModal = closeDayModal;
+
+checkSession();
 </script>
 </body>
 </html>
