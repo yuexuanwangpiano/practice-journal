@@ -414,6 +414,26 @@
 
   .recordings-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 
+  .recording-item-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    margin-bottom: 0;
+  }
+  .recording-item-delete-bg {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 80px;
+    background: #c0392b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Jost', sans-serif;
+  }
   .recording-item {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -422,7 +442,12 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
+    transition: transform 0.2s ease;
+    touch-action: pan-y;
+    user-select: none;
   }
+  .recording-item.swiping { transition: none; }
 
   .rec-play {
     width: 32px;
@@ -443,20 +468,23 @@
   .rec-play.playing { background: var(--gold); }
 
   .rec-info { flex: 1; min-width: 0; }
-  .rec-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-name {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    border-bottom: 1px dashed var(--border);
+    display: inline-block;
+    max-width: 100%;
+    padding-bottom: 1px;
+  }
+  .rec-name:hover { border-bottom-color: var(--accent); }
   .rec-duration { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
 
   .rec-delete {
-    background: none;
-    border: none;
-    color: var(--border);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 4px;
-    transition: color 0.2s;
-    flex-shrink: 0;
+    display: none;
   }
-  .rec-delete:hover { color: #c0392b; }
 
   audio { display: none; }
 
@@ -1062,6 +1090,15 @@
     padding: 32px 24px;
   }
   .login-screen.visible { display: flex; }
+
+  .login-paws {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 220px;
+    height: 280px;
+    pointer-events: none;
+  }
   .login-box {
     width: 100%;
     max-width: 340px;
@@ -1338,6 +1375,16 @@
       <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
     </div>
 
+    <!-- Rename Recording Sheet -->
+    <div class="goal-sheet-overlay" id="rename-sheet-overlay" onclick="skipRename()"></div>
+    <div class="goal-sheet" id="rename-sheet">
+      <div class="goal-sheet-handle"></div>
+      <div class="section-label" style="margin-bottom:6px;">Recording Name</div>
+      <input type="text" class="login-input" id="rename-input" placeholder="e.g. Chopin Op.10 run-through" autocomplete="off">
+      <button class="save-btn" onclick="confirmRename()" style="margin-top:14px;">Save</button>
+      <button onclick="skipRename()" style="width:100%;margin-top:8px;padding:11px;background:none;border:none;color:var(--muted);font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Skip</button>
+    </div>
+
     <!-- This Week View -->
     <div class="view" id="view-stats">
       <div class="stats-header">This Week</div>
@@ -1403,6 +1450,51 @@
 
 <!-- Login Screen -->
 <div class="login-screen" id="login-screen">
+
+  <!-- Cat paw prints background -->
+  <svg class="login-paws" viewBox="0 0 220 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Paw 1 (top right, larger) -->
+    <g transform="translate(140,30) rotate(-20)" opacity="0.13">
+      <ellipse cx="0" cy="0" rx="13" ry="16" fill="var(--accent)"/>
+      <ellipse cx="-14" cy="-14" rx="6" ry="7.5" fill="var(--accent)"/>
+      <ellipse cx="-5" cy="-20" rx="6" ry="7.5" fill="var(--accent)"/>
+      <ellipse cx="7" cy="-21" rx="6" ry="7.5" fill="var(--accent)"/>
+      <ellipse cx="16" cy="-14" rx="5.5" ry="7" fill="var(--accent)"/>
+    </g>
+    <!-- Paw 2 (stepped left and down) -->
+    <g transform="translate(95,85) rotate(15)" opacity="0.10">
+      <ellipse cx="0" cy="0" rx="11" ry="14" fill="var(--accent)"/>
+      <ellipse cx="-12" cy="-12" rx="5" ry="6.5" fill="var(--accent)"/>
+      <ellipse cx="-4" cy="-17" rx="5" ry="6.5" fill="var(--accent)"/>
+      <ellipse cx="6" cy="-18" rx="5" ry="6.5" fill="var(--accent)"/>
+      <ellipse cx="14" cy="-12" rx="4.5" ry="6" fill="var(--accent)"/>
+    </g>
+    <!-- Paw 3 (right, lower) -->
+    <g transform="translate(168,130) rotate(-10)" opacity="0.09">
+      <ellipse cx="0" cy="0" rx="10" ry="13" fill="var(--accent)"/>
+      <ellipse cx="-11" cy="-11" rx="4.5" ry="6" fill="var(--accent)"/>
+      <ellipse cx="-3.5" cy="-16" rx="4.5" ry="6" fill="var(--accent)"/>
+      <ellipse cx="5" cy="-17" rx="4.5" ry="6" fill="var(--accent)"/>
+      <ellipse cx="12" cy="-11" rx="4" ry="5.5" fill="var(--accent)"/>
+    </g>
+    <!-- Paw 4 (trailing off, faint) -->
+    <g transform="translate(120,195) rotate(25)" opacity="0.07">
+      <ellipse cx="0" cy="0" rx="9" ry="11" fill="var(--accent)"/>
+      <ellipse cx="-10" cy="-10" rx="4" ry="5.5" fill="var(--accent)"/>
+      <ellipse cx="-3" cy="-15" rx="4" ry="5.5" fill="var(--accent)"/>
+      <ellipse cx="5" cy="-15" rx="4" ry="5.5" fill="var(--accent)"/>
+      <ellipse cx="11" cy="-10" rx="3.5" ry="5" fill="var(--accent)"/>
+    </g>
+    <!-- Paw 5 (very faint, bottom right) -->
+    <g transform="translate(185,240) rotate(-30)" opacity="0.055">
+      <ellipse cx="0" cy="0" rx="8" ry="10" fill="var(--accent)"/>
+      <ellipse cx="-9" cy="-9" rx="3.5" ry="5" fill="var(--accent)"/>
+      <ellipse cx="-3" cy="-13" rx="3.5" ry="5" fill="var(--accent)"/>
+      <ellipse cx="4" cy="-14" rx="3.5" ry="5" fill="var(--accent)"/>
+      <ellipse cx="10" cy="-9" rx="3" ry="4.5" fill="var(--accent)"/>
+    </g>
+  </svg>
+
   <div class="login-box">
     <div class="login-title">Practice Journal</div>
     <div class="login-sub">Your private practice space</div>
@@ -1806,6 +1898,47 @@ function addBlock() {
 }
 
 // ---- Recordings ----
+let renamingRecordingIndex = null;
+
+function openRenameSheet(index) {
+  renamingRecordingIndex = index;
+  const entry = getEntry(selectedDate);
+  const rec = entry.recordings[index];
+  // Strip extension for cleaner editing
+  const nameNoExt = rec.name.replace(/\.[^.]+$/, '');
+  document.getElementById('rename-input').value = nameNoExt;
+  document.getElementById('rename-sheet-overlay').classList.add('open');
+  document.getElementById('rename-sheet').classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById('rename-input');
+    inp.focus();
+    inp.select();
+  }, 350);
+}
+
+function confirmRename() {
+  const val = document.getElementById('rename-input').value.trim();
+  if (val && renamingRecordingIndex !== null) {
+    const entry = getEntry(selectedDate);
+    entry.recordings[renamingRecordingIndex].name = val;
+    setEntry(selectedDate, entry);
+    renderRecordings(entry.recordings);
+  }
+  closeRenameSheet();
+}
+
+function skipRename() {
+  closeRenameSheet();
+}
+
+function closeRenameSheet() {
+  document.getElementById('rename-sheet-overlay').classList.remove('open');
+  const sheet = document.getElementById('rename-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
+  renamingRecordingIndex = null;
+}
+
 function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1822,6 +1955,8 @@ function handleFileUpload(e) {
     setEntry(selectedDate, entry);
     renderCalendar();
     renderRecordings(entry.recordings);
+    // Show rename sheet for the newly added recording
+    openRenameSheet(entry.recordings.length - 1);
   };
   reader.readAsDataURL(file);
   e.target.value = '';
@@ -1833,6 +1968,14 @@ function renderRecordings(recordings) {
   audioPlayers = {};
 
   recordings.forEach((rec, i) => {
+    // Swipe wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'recording-item-wrap';
+
+    const deleteBg = document.createElement('div');
+    deleteBg.className = 'recording-item-delete-bg';
+    deleteBg.textContent = 'Delete';
+
     const item = document.createElement('div');
     item.className = 'recording-item';
 
@@ -1855,7 +1998,6 @@ function renderRecordings(recordings) {
         playBtn.className = 'rec-play';
         playBtn.textContent = '▶';
       } else {
-        // Stop all others
         Object.keys(audioPlayers).forEach(k => {
           if (k != i && audioPlayers[k].playing) {
             audioPlayers[k].audio.pause();
@@ -1872,24 +2014,66 @@ function renderRecordings(recordings) {
 
     const info = document.createElement('div');
     info.className = 'rec-info';
-    const name = document.createElement('div');
-    name.className = 'rec-name';
-    name.textContent = rec.name;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'rec-name';
+    nameEl.textContent = rec.name;
+    nameEl.title = 'Tap to rename';
+    nameEl.onclick = () => openRenameSheet(i);
+
     const dur = document.createElement('div');
     dur.className = 'rec-duration';
     dur.textContent = formatSize(rec.size);
-    info.appendChild(name);
-    info.appendChild(dur);
 
-    const del = document.createElement('button');
-    del.className = 'rec-delete';
-    del.textContent = '×';
-    del.onclick = () => deleteRecording(i);
+    info.appendChild(nameEl);
+    info.appendChild(dur);
 
     item.appendChild(playBtn);
     item.appendChild(info);
-    item.appendChild(del);
-    list.appendChild(item);
+    wrap.appendChild(deleteBg);
+    wrap.appendChild(item);
+    list.appendChild(wrap);
+
+    // Swipe left to delete
+    let startX = 0, startY = 0, currentX = 0, isSwiping = false;
+    const THRESHOLD = 72;
+
+    function onStart(e) {
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      currentX = 0;
+      isSwiping = false;
+      item.classList.add('swiping');
+    }
+    function onMove(e) {
+      const dx = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+      const dy = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+      if (!isSwiping && Math.abs(dy) > Math.abs(dx)) { item.classList.remove('swiping'); return; }
+      isSwiping = true;
+      if (dx > 0) return;
+      currentX = dx;
+      item.style.transform = `translateX(${Math.max(dx, -THRESHOLD - 20)}px)`;
+    }
+    function onEnd() {
+      item.classList.remove('swiping');
+      if (currentX < -THRESHOLD) {
+        item.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+        item.style.transform = `translateX(-100%)`;
+        item.style.opacity = '0';
+        setTimeout(() => deleteRecording(i), 260);
+      } else {
+        item.style.transition = 'transform 0.25s ease';
+        item.style.transform = '';
+        setTimeout(() => item.style.transition = '', 260);
+      }
+    }
+
+    item.addEventListener('touchstart', onStart, { passive: true });
+    item.addEventListener('touchmove', onMove, { passive: true });
+    item.addEventListener('touchend', onEnd);
+    item.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
   });
 }
 
@@ -2536,6 +2720,9 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 });
 
 // Expose functions to global scope (required for inline onclick handlers with type="module")
+window.openRenameSheet = openRenameSheet;
+window.confirmRename = confirmRename;
+window.skipRename = skipRename;
 window.openBlockForm = openBlockForm;
 window.closeBlockForm = closeBlockForm;
 window.saveBlockFromSheet = saveBlockFromSheet;
@@ -2559,6 +2746,21 @@ window.toggleGoal = toggleGoal;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
 window.closeDayModal = closeDayModal;
+
+document.getElementById('rename-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmRename();
+});
+
+// iOS keyboard shift also applies to rename sheet
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const keyboardHeight = window.innerHeight - window.visualViewport.height;
+    const renameSheet = document.getElementById('rename-sheet');
+    if (renameSheet.classList.contains('open')) {
+      renameSheet.style.bottom = keyboardHeight > 50 ? keyboardHeight + 'px' : '';
+    }
+  });
+}
 
 checkSession();
 </script>
