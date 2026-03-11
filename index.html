@@ -1575,8 +1575,10 @@
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
       <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
       <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:80px;"></textarea>
-      <button class="save-btn" onclick="saveBlockFromSheet()" style="margin-top:12px;">Save</button>
-      <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
+      <div id="block-sheet-actions" style="display:flex;gap:8px;margin-top:12px;">
+        <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;flex:1;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
+        <button class="save-btn" onclick="saveBlockFromSheet()" style="flex:1;margin-top:0;">Save</button>
+      </div>
     </div>
 
     <!-- This Week View -->
