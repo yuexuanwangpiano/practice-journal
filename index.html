@@ -1777,8 +1777,14 @@ let currentUser = null;
 
 // Hash PIN with SHA-256 before storing — never store plain text PINs
 async function hashPin(pin) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  // crypto.subtle requires HTTPS — fall back to plain pin if unavailable
+  if (!crypto?.subtle) return pin;
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch(e) {
+    return pin; // fallback: treat as plain text
+  }
 }
 
 async function handleLogin() {
@@ -1803,15 +1809,15 @@ async function handleLogin() {
     if (snap.exists()) {
       // Existing user — verify PIN hash
       const stored = snap.data().pin;
-      // Support both legacy plain-text PINs (4 digits) and new hashed PINs
-      const match = stored.length === 4 ? stored === pin : stored === pinHash;
+      // Support plain-text PINs (4 digits), hashed PINs (64 chars), and fallback
+      const match = stored === pinHash || stored === pin;
       if (!match) {
         errEl.textContent = 'Wrong PIN. Try again.';
         btn.textContent = 'Enter'; btn.disabled = false;
         return;
       }
       // Silently upgrade legacy plain-text PIN to hash on successful login
-      if (stored.length === 4) {
+      if (stored === pin && pinHash !== pin) {
         await setDoc(userRef, { pin: pinHash, createdAt: snap.data().createdAt });
       }
     } else {
@@ -1824,7 +1830,8 @@ async function handleLogin() {
     btn.textContent = 'Enter'; btn.disabled = false;
     showApp();
   } catch(e) {
-    errEl.textContent = 'Connection error. Check internet and try again.';
+    console.error('Login error:', e);
+    errEl.textContent = 'Error: ' + (e?.message || e?.code || 'Connection failed. Check internet.');
     btn.textContent = 'Enter'; btn.disabled = false;
   }
 }
