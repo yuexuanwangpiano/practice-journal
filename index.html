@@ -652,6 +652,26 @@
 
   .goal-delete { display: none; }
 
+  .add-block-fab {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    padding: 11px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .add-block-fab:hover { border-color: var(--accent); color: var(--accent); }
+
   /* ---- Add Goal Button & Sheet ---- */
   .add-goal-fab {
     display: block;
@@ -924,12 +944,9 @@
     <!-- Journal View -->
     <div class="view active" id="view-journal">
       <div class="selected-date" id="selected-date-label"></div>
+      <button class="add-block-fab" onclick="openBlockForm()">+ Add</button>
 
       <div id="blocks-list"></div>
-
-      <div style="display:flex; gap:8px; margin-top:4px;">
-        <button class="add-block-btn" onclick="addBlock()">+ Add</button>
-      </div>
 
       <div class="section-gap">
         <div class="section-label">Recordings</div>
@@ -941,6 +958,17 @@
         <input type="file" id="file-input" accept="audio/*" onchange="handleFileUpload(event)">
         <div class="recordings-list" id="recordings-list"></div>
       </div>
+    </div>
+
+    <!-- Block Form Sheet -->
+    <div class="goal-sheet-overlay" id="block-sheet-overlay" onclick="closeBlockForm()"></div>
+    <div class="goal-sheet" id="block-sheet">
+      <div class="goal-sheet-handle"></div>
+      <div class="section-label" style="margin-bottom:6px;">Piece</div>
+      <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
+      <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
+      <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:110px;"></textarea>
+      <button class="save-btn" onclick="saveBlockFromSheet()" style="margin-top:12px;">Save</button>
     </div>
 
     <!-- This Week View -->
@@ -1600,6 +1628,32 @@ function saveGoals() {
     .catch(e => console.error('Save goals failed', e));
 }
 
+function openBlockForm() {
+  document.getElementById('block-sheet-overlay').classList.add('open');
+  document.getElementById('block-sheet').classList.add('open');
+  document.getElementById('block-sheet-piece').value = '';
+  document.getElementById('block-sheet-note').value = '';
+  setTimeout(() => document.getElementById('block-sheet-piece').focus(), 350);
+}
+
+function closeBlockForm() {
+  document.getElementById('block-sheet-overlay').classList.remove('open');
+  document.getElementById('block-sheet').classList.remove('open');
+}
+
+function saveBlockFromSheet() {
+  const piece = document.getElementById('block-sheet-piece').value.trim();
+  const note = document.getElementById('block-sheet-note').value.trim();
+  if (!piece && !note) return;
+  const entry = getEntry(selectedDate);
+  if (!entry.blocks) entry.blocks = [];
+  entry.blocks.push({ piece, note, saved: true });
+  setEntry(selectedDate, entry);
+  closeBlockForm();
+  renderCalendar();
+  renderBlocks(entry.blocks);
+}
+
 function openGoalForm() {
   document.getElementById('goal-sheet-overlay').classList.add('open');
   document.getElementById('goal-sheet').classList.add('open');
@@ -1786,6 +1840,9 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 });
 
 // Expose functions to global scope (required for inline onclick handlers with type="module")
+window.openBlockForm = openBlockForm;
+window.closeBlockForm = closeBlockForm;
+window.saveBlockFromSheet = saveBlockFromSheet;
 window.openGoalForm = openGoalForm;
 window.closeGoalForm = closeGoalForm;
 window.handleLogin = handleLogin;
