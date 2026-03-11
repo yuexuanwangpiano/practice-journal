@@ -155,6 +155,18 @@
   }
   .cal-day.selected.has-entry::after { background: rgba(255,255,255,0.6); }
 
+  .cal-day.has-goal::before {
+    content: '◆';
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.3rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .cal-day.selected.has-goal::before { color: rgba(255,255,255,0.8); }
+
   .cal-day.other-month { color: var(--border); cursor: default; }
 
   /* ---- Scrollable Content ---- */
@@ -376,6 +388,81 @@
     font-size: 0.85rem;
   }
   .empty-icon { font-size: 2rem; margin-bottom: 10px; }
+
+  /* ---- Goals ---- */
+  .goal-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 2px;
+    margin-bottom: 4px;
+  }
+
+  .goal-date-input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text);
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+  }
+  .goal-date-input:focus { border-color: var(--accent); }
+
+  .goal-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .goal-item.done {
+    opacity: 0.5;
+  }
+
+  .goal-check {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: none;
+  }
+  .goal-check:hover { border-color: var(--accent); }
+  .goal-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; font-size: 0.6rem; }
+
+  .goal-body { flex: 1; min-width: 0; }
+  .goal-text { font-size: 0.85rem; line-height: 1.5; margin-bottom: 4px; }
+  .goal-text.done { text-decoration: line-through; color: var(--muted); }
+  .goal-due { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+  .goal-due.overdue { color: #c0392b; }
+
+  .goal-delete {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 4px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+  .goal-delete:hover { color: #c0392b; }
 </style>
 </head>
 <body>
@@ -438,6 +525,22 @@
       <div id="recent-list"></div>
     </div>
 
+    <!-- Goals View -->
+    <div class="view" id="view-goals">
+      <div class="stats-header">Goals</div>
+
+      <!-- Add Goal Form -->
+      <div class="goal-form">
+        <div class="section-label" style="margin-bottom:8px;">New Goal</div>
+        <textarea class="note-area" id="goal-input" placeholder="What do you want to achieve? (e.g. Learn the Chopin Ballade No.1, perfect the Coda section...)" style="min-height:90px;"></textarea>
+        <input type="date" id="goal-date" class="goal-date-input">
+        <button class="save-btn" onclick="addGoal()" style="margin-top:8px;">Add Goal</button>
+      </div>
+
+      <div class="section-label" style="margin-top:24px;margin-bottom:10px;">Active Goals</div>
+      <div id="goals-list"></div>
+    </div>
+
   </div>
 
   <!-- Bottom Nav -->
@@ -449,6 +552,10 @@
     <button class="nav-item" id="nav-stats" onclick="switchView('stats')">
       <div class="nav-icon">✦</div>
       <div class="nav-label">Overview</div>
+    </button>
+    <button class="nav-item" id="nav-goals" onclick="switchView('goals')">
+      <div class="nav-icon">🎯</div>
+      <div class="nav-label">Goals</div>
     </button>
   </div>
 </div>
@@ -531,6 +638,9 @@ function renderCalendar() {
     }
     if (entries[key] && (entries[key].note || (entries[key].recordings && entries[key].recordings.length))) {
       el.classList.add('has-entry');
+    }
+    if (goals.some(g => g.date === key && !g.done)) {
+      el.classList.add('has-goal');
     }
 
     el.onclick = () => selectDate(thisDate);
@@ -744,10 +854,106 @@ function switchView(view) {
 
   if (view === 'stats') renderStats();
   if (view === 'journal') { renderCalendar(); loadJournalForDate(); }
+  if (view === 'goals') renderGoals();
+}
+
+// ---- Goals ----
+let goals = [];
+
+function loadGoals() {
+  try { goals = JSON.parse(localStorage.getItem('pj_goals') || '[]'); } catch(e) { goals = []; }
+}
+
+function saveGoals() {
+  localStorage.setItem('pj_goals', JSON.stringify(goals));
+}
+
+function addGoal() {
+  const text = document.getElementById('goal-input').value.trim();
+  const date = document.getElementById('goal-date').value;
+  if (!text) return;
+  goals.push({ id: Date.now(), text, date, done: false });
+  saveGoals();
+  document.getElementById('goal-input').value = '';
+  document.getElementById('goal-date').value = '';
+  renderCalendar();
+  renderGoals();
+}
+
+function toggleGoal(id) {
+  const g = goals.find(g => g.id === id);
+  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); renderGoals(); }
+}
+
+function deleteGoal(id) {
+  goals = goals.filter(g => g.id !== id);
+  saveGoals();
+  renderCalendar();
+  renderGoals();
+}
+
+function renderGoals() {
+  const list = document.getElementById('goals-list');
+  list.innerHTML = '';
+
+  // Sort: undone first, then by date
+  const sorted = [...goals].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date.localeCompare(b.date);
+  });
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div>No goals yet.<br>Add one above!</div></div>';
+    return;
+  }
+
+  sorted.forEach(g => {
+    const today = new Date().toISOString().split('T')[0];
+    const isOverdue = g.date && g.date < today && !g.done;
+
+    const item = document.createElement('div');
+    item.className = 'goal-item' + (g.done ? ' done' : '');
+
+    const check = document.createElement('button');
+    check.className = 'goal-check' + (g.done ? ' checked' : '');
+    check.textContent = g.done ? '✓' : '';
+    check.onclick = () => toggleGoal(g.id);
+
+    const body = document.createElement('div');
+    body.className = 'goal-body';
+
+    const text = document.createElement('div');
+    text.className = 'goal-text' + (g.done ? ' done' : '');
+    text.textContent = g.text;
+
+    body.appendChild(text);
+
+    if (g.date) {
+      const due = document.createElement('div');
+      due.className = 'goal-due' + (isOverdue ? ' overdue' : '');
+      const d = new Date(g.date + 'T00:00:00');
+      due.textContent = (isOverdue ? 'Overdue · ' : 'By · ') + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      body.appendChild(due);
+    }
+
+    const del = document.createElement('button');
+    del.className = 'goal-delete';
+    del.textContent = '×';
+    del.onclick = () => deleteGoal(g.id);
+
+    item.appendChild(check);
+    item.appendChild(body);
+    item.appendChild(del);
+    list.appendChild(item);
+  });
 }
 
 // ---- Init ----
 loadData();
+loadGoals();
 renderCalendar();
 loadJournalForDate();
 </script>
