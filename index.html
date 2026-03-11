@@ -854,7 +854,7 @@
 
   /* Month drill-down mode */
   #year-cal-body.month-mode {
-    padding: 0 16px 32px;
+    padding: 0 12px 32px;
     overflow-y: auto;
   }
   .ycal-back-btn {
@@ -2295,7 +2295,7 @@ function renderCalView() {
       body.appendChild(card);
     }
   } else {
-    // ---- Month drill-down mode ----
+    // ---- Month drill-down mode — same layout as Log/Goals calendar ----
     title.textContent = `${MONTHS_FULL[calViewMonth]} ${calViewYear}`;
     body.className = 'year-cal-body month-mode';
     body.innerHTML = '';
@@ -2307,47 +2307,51 @@ function renderCalView() {
     back.onclick = () => { calViewMonth = null; renderCalView(); };
     body.appendChild(back);
 
-    // Full month grid
+    // Calendar grid — identical CSS classes to Log/Goals cal
     const grid = document.createElement('div');
-    grid.className = 'ycal-full-grid';
+    grid.className = 'cal-grid';
 
-    DAYS_SHORT.forEach(d => {
-      const cell = document.createElement('div');
-      cell.className = 'ycal-full-cell label';
-      cell.textContent = d;
-      grid.appendChild(cell);
+    // Day labels row (S M T W T F S)
+    ['S','M','T','W','T','F','S'].forEach(d => {
+      const lbl = document.createElement('div');
+      lbl.className = 'cal-day-label';
+      lbl.textContent = d;
+      grid.appendChild(lbl);
     });
 
     const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
     const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
     const daysInPrev = new Date(calViewYear, calViewMonth, 0).getDate();
 
+    // Prev-month overflow
     for (let i = firstDay - 1; i >= 0; i--) {
-      const cell = document.createElement('div');
-      cell.className = 'ycal-full-cell other';
-      cell.textContent = daysInPrev - i;
-      grid.appendChild(cell);
+      const el = document.createElement('div');
+      el.className = 'cal-day other-month';
+      el.innerHTML = `<span class="cal-day-num">${daysInPrev - i}</span>`;
+      grid.appendChild(el);
     }
 
+    // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const key = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const isToday = d === now.getDate() && calViewMonth === now.getMonth() && calViewYear === now.getFullYear();
       const hasEntry = entries[key] && (entries[key].blocks?.some(b => b.piece || b.note) || entries[key].recordings?.length);
       const hasGoal = goals.some(g => g.date === key && !g.done);
       const hasGoalDone = !hasGoal && goals.some(g => g.date === key && g.done);
-      const cell = document.createElement('div');
-      cell.className = 'ycal-full-cell'
+
+      const el = document.createElement('div');
+      el.className = 'cal-day'
         + (isToday ? ' today' : '')
         + (hasEntry ? ' has-entry' : '')
         + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '');
-      cell.innerHTML = `${d}${hasEntry ? '<span class="ycal-dot"></span>' : ''}`;
-      if (hasEntry || hasGoal) cell.onclick = () => openDayModal(key);
-      grid.appendChild(cell);
+      el.innerHTML = `<span class="cal-day-num">${d}</span>`;
+      if (hasEntry || hasGoal) el.onclick = () => openDayModal(key);
+      grid.appendChild(el);
     }
 
     body.appendChild(grid);
 
-    // Entries list for this month
+    // Entries list below the grid
     const monthEntries = [];
     for (let d = 1; d <= daysInMonth; d++) {
       const key = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
