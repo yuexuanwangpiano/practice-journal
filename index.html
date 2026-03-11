@@ -295,7 +295,8 @@
 
   /* ── 3-dot menu (PC hover only) ── */
   .item-dots-btn {
-    display: none; /* hidden on touch devices */
+    display: flex;
+    align-items: center;
     background: none;
     border: none;
     cursor: pointer;
@@ -310,9 +311,7 @@
   .item-dots-btn:hover { color: var(--text); background: var(--border); }
 
   /* Show dots button only on pointer:fine (mouse) devices */
-  @media (pointer: fine) {
-    .item-dots-btn { display: flex; align-items: center; }
-  }
+
 
   .dots-menu {
     position: fixed;
@@ -671,34 +670,7 @@
   .empty-icon { font-size: 2rem; margin-bottom: 10px; }
 
   /* ---- Goals ---- */
-  /* Block form date picker — mobile only */
-  .block-date-row { display: none; }
-  @media (pointer: coarse) {
-    .block-date-row { display: block; }
-  }
-  .block-date-selects {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .block-date-select {
-    flex: 1;
-    padding: 10px 6px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Jost', sans-serif;
-    font-size: 0.85rem;
-    appearance: none;
-    -webkit-appearance: none;
-    text-align: center;
-    cursor: pointer;
-  }
-  .block-date-select:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+
 
   .goal-color-picker {
     display: flex;
@@ -806,6 +778,50 @@
   .goal-due.overdue { color: #c0392b; }
 
   .goal-delete { display: none; }
+
+  /* ---- Date Picker Overlay ---- */
+  .selected-date::after {
+    content: ' ▾';
+    font-size: 0.9rem;
+    opacity: 0.45;
+  }
+  @media (pointer: fine) {
+    .selected-date::after { display: none; }
+    .selected-date { cursor: default !important; }
+  }
+  .date-picker-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1100;
+  }
+  .date-picker-overlay.open { display: block; }
+  .date-picker-panel {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 430px;
+    background: var(--bg);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+    z-index: 1101;
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .date-picker-panel.open { transform: translateX(-50%) translateY(0); }
+  .date-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+  }
+  /* date picker uses same cal-grid/cal-day styles */
+  #dp-grid .cal-day.selected { background: var(--text); color: #fff; border-radius: 50%; }
 
   /* ---- Fireworks ---- */
   .firework-wrap {
@@ -1544,7 +1560,7 @@
 
     <!-- Journal View -->
     <div class="view active" id="view-journal">
-      <div class="selected-date" id="selected-date-label"></div>
+      <div class="selected-date" id="selected-date-label" onclick="openDatePicker()" style="cursor:pointer;" title="Change date"></div>
       <button class="add-block-fab" onclick="openBlockForm()">+ Add</button>
 
       <div id="blocks-list"></div>
@@ -1563,14 +1579,6 @@
     <div class="goal-sheet-overlay" id="block-sheet-overlay" onclick="closeBlockForm()"></div>
     <div class="goal-sheet" id="block-sheet">
       <div class="goal-sheet-handle"></div>
-      <div class="block-date-row" id="block-date-row">
-        <div class="section-label" style="margin-bottom:8px;">Date</div>
-        <div class="block-date-selects">
-          <select id="block-date-month" class="block-date-select"></select>
-          <select id="block-date-day" class="block-date-select"></select>
-          <select id="block-date-year" class="block-date-select"></select>
-        </div>
-      </div>
       <div class="section-label" style="margin-bottom:6px;">Piece</div>
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
       <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
@@ -1579,6 +1587,17 @@
         <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;flex:1;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
         <button class="save-btn" onclick="saveBlockFromSheet()" style="flex:1;margin-top:0;">Save</button>
       </div>
+    </div>
+
+    <!-- Date Picker Overlay (mobile date switching) -->
+    <div class="date-picker-overlay" id="date-picker-overlay" onclick="closeDatePicker()"></div>
+    <div class="date-picker-panel" id="date-picker-panel">
+      <div class="date-picker-header">
+        <button class="cal-arrow" onclick="dpChangeMonth(-1);event.stopPropagation()">‹</button>
+        <span id="dp-title"></span>
+        <button class="cal-arrow" onclick="dpChangeMonth(1);event.stopPropagation()">›</button>
+      </div>
+      <div class="cal-grid" id="dp-grid"></div>
     </div>
 
     <!-- This Week View -->
@@ -2142,9 +2161,9 @@ function createBlockEl(data, index) {
   content.innerHTML = `
     <div class="block-saved-piece">${data.piece || '<span style="color:var(--border);font-family:Jost,sans-serif;font-size:0.8rem;">No piece</span>'}</div>
     ${data.note ? `<div class="block-saved-note">${data.note}</div>` : ''}
-    <div class="block-saved-hint">Tap to edit</div>
+
   `;
-  content.addEventListener('click', () => openBlockForm(index));
+
 
   // ⋯ button
   const dotsBtn = document.createElement('button');
@@ -2154,6 +2173,16 @@ function createBlockEl(data, index) {
 
   const menu = document.createElement('div');
   menu.className = 'dots-menu';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'dots-menu-item';
+  editBtn.textContent = 'Edit';
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.remove('open');
+    openBlockForm(index);
+  });
+  menu.appendChild(editBtn);
 
   const delBtn = document.createElement('button');
   delBtn.className = 'dots-menu-item danger';
@@ -2694,57 +2723,12 @@ function saveGoals() {
 
 let editingBlockIndex = null;
 
-function populateBlockDateSelects(date) {
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const selM = document.getElementById('block-date-month');
-  const selD = document.getElementById('block-date-day');
-  const selY = document.getElementById('block-date-year');
-  if (!selM) return;
-
-  // Month options
-  selM.innerHTML = MONTHS.map((m,i) =>
-    `<option value="${i+1}" ${i === date.getMonth() ? 'selected' : ''}>${m}</option>`
-  ).join('');
-
-  // Day options — update when month changes
-  function fillDays(month, year, selectedDay) {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    selD.innerHTML = Array.from({length: daysInMonth}, (_,i) =>
-      `<option value="${i+1}" ${i+1 === selectedDay ? 'selected' : ''}>${i+1}</option>`
-    ).join('');
-  }
-
-  // Year options: ±1 year range around today
-  const thisYear = new Date().getFullYear();
-  selY.innerHTML = [thisYear-1, thisYear, thisYear+1].map(y =>
-    `<option value="${y}" ${y === date.getFullYear() ? 'selected' : ''}>${y}</option>`
-  ).join('');
-
-  fillDays(date.getMonth() + 1, date.getFullYear(), date.getDate());
-
-  // When month or year changes, refresh day options
-  selM.onchange = () => fillDays(parseInt(selM.value), parseInt(selY.value), parseInt(selD.value) || 1);
-  selY.onchange = () => fillDays(parseInt(selM.value), parseInt(selY.value), parseInt(selD.value) || 1);
-}
-
-function getBlockDateFromSelects() {
-  const m = parseInt(document.getElementById('block-date-month').value);
-  const d = parseInt(document.getElementById('block-date-day').value);
-  const y = parseInt(document.getElementById('block-date-year').value);
-  return new Date(y, m - 1, d);
-}
-
 function openBlockForm(index = null) {
   editingBlockIndex = index;
   const entry = getEntry(selectedDate);
   const data = index !== null ? (entry.blocks?.[index] || {}) : {};
   document.getElementById('block-sheet-piece').value = data.piece || '';
   document.getElementById('block-sheet-note').value = data.note || '';
-  // Pre-fill date selects with selectedDate (mobile only, shown only for new entries)
-  const dateRow = document.getElementById('block-date-row');
-  if (dateRow) dateRow.style.display = index === null ? '' : 'none';
-  populateBlockDateSelects(selectedDate);
-
   // Show/hide delete button
   const delBtn = document.getElementById('block-sheet-delete');
   if (delBtn) delBtn.style.display = index !== null ? 'block' : 'none';
@@ -2766,9 +2750,7 @@ function saveBlockFromSheet() {
   const note = document.getElementById('block-sheet-note').value.trim();
   if (!piece && !note) return;
 
-  // On mobile, respect the date the user picked; otherwise use selectedDate
-  const isMobileForm = window.matchMedia('(pointer: coarse)').matches;
-  const saveDate = isMobileForm ? getBlockDateFromSelects() : selectedDate;
+  const saveDate = selectedDate;
 
   const entry = getEntry(saveDate);
   if (!entry.blocks) entry.blocks = [];
@@ -2778,16 +2760,10 @@ function saveBlockFromSheet() {
   } else {
     entry.blocks.push({ piece, note, saved: true });
   }
-  setEntry(saveDate, entry);
-
-  // If saved to a different date than currently selected, jump to it
-  if (dateKey(saveDate) !== dateKey(selectedDate)) {
-    selectedDate = saveDate;
-  }
-
+  setEntry(selectedDate, entry);
   closeBlockForm();
   renderCalendar();
-  loadJournalForDate();
+  renderBlocks(entry.blocks);
   if (isNew) launchFirework();
 }
 
@@ -2871,6 +2847,76 @@ function deleteGoal(id) {
   renderCalendar();
   if (typeof calViewMonth !== 'undefined') renderCalView();
   renderGoals();
+}
+
+let dpDate = new Date(); // tracks the month shown in date picker
+
+function openDatePicker() {
+  // Only on mobile (touch)
+  if (window.matchMedia('(pointer: fine)').matches) return;
+  dpDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+  renderDpGrid();
+  document.getElementById('date-picker-overlay').classList.add('open');
+  document.getElementById('date-picker-panel').classList.add('open');
+}
+
+function closeDatePicker() {
+  document.getElementById('date-picker-overlay').classList.remove('open');
+  document.getElementById('date-picker-panel').classList.remove('open');
+}
+
+function dpChangeMonth(dir) {
+  dpDate = new Date(dpDate.getFullYear(), dpDate.getMonth() + dir, 1);
+  renderDpGrid();
+}
+
+function renderDpGrid() {
+  const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS = ['S','M','T','W','T','F','S'];
+  document.getElementById('dp-title').textContent = MONTHS_FULL[dpDate.getMonth()] + ' ' + dpDate.getFullYear();
+
+  const grid = document.getElementById('dp-grid');
+  grid.innerHTML = '';
+
+  // Day labels
+  DAYS.forEach(d => {
+    const lbl = document.createElement('div');
+    lbl.className = 'cal-day-label';
+    lbl.textContent = d;
+    grid.appendChild(lbl);
+  });
+
+  const firstDay = new Date(dpDate.getFullYear(), dpDate.getMonth(), 1).getDay();
+  const daysInMonth = new Date(dpDate.getFullYear(), dpDate.getMonth() + 1, 0).getDate();
+  const daysInPrev = new Date(dpDate.getFullYear(), dpDate.getMonth(), 0).getDate();
+  const today = new Date();
+
+  // Prev month overflow
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const el = document.createElement('div');
+    el.className = 'cal-day other-month';
+    el.innerHTML = `<span class="cal-day-num">${daysInPrev - i}</span>`;
+    grid.appendChild(el);
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const thisDate = new Date(dpDate.getFullYear(), dpDate.getMonth(), d);
+    const el = document.createElement('div');
+    let cls = 'cal-day';
+    if (d === today.getDate() && dpDate.getMonth() === today.getMonth() && dpDate.getFullYear() === today.getFullYear()) cls += ' today';
+    if (dateKey(thisDate) === dateKey(selectedDate)) cls += ' selected';
+    el.className = cls;
+    el.innerHTML = `<span class="cal-day-num">${d}</span>`;
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedDate = thisDate;
+      closeDatePicker();
+      renderCalendar();
+      loadJournalForDate();
+    });
+    grid.appendChild(el);
+  }
 }
 
 function launchFirework() {
@@ -3148,6 +3194,9 @@ window.selectGoalColor = selectGoalColor;
 window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
+window.openDatePicker = openDatePicker;
+window.closeDatePicker = closeDatePicker;
+window.dpChangeMonth = dpChangeMonth;
 window.launchFirework = launchFirework;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
