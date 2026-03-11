@@ -811,6 +811,21 @@
     100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
   }
 
+  /* ---- Inline date-picker calendar (mobile Log view) ---- */
+  #inline-cal-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 14px 10px;
+    margin-bottom: 14px;
+  }
+
+  /* Dim the Add button while the inline calendar is open */
+  .add-block-fab[data-cal-open="true"] {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
   /* ---- Confetti (canvas-based, no DOM pieces needed) ---- */
   .confetti-canvas {
     position: fixed;
@@ -1518,7 +1533,21 @@
     <!-- Journal View -->
     <div class="view active" id="view-journal">
       <div class="selected-date" id="selected-date-label" onclick="openDatePicker()" style="cursor:pointer;" title="Change date"></div>
-      <button class="add-block-fab" onclick="openBlockForm()">+ Add</button>
+
+      <!-- Inline calendar — shown on mobile when the user taps the date label -->
+      <div id="inline-cal-panel" style="display:none;">
+        <div class="cal-nav">
+          <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month" id="inline-cal-month-label"></div>
+          <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+        </div>
+        <div style="text-align:right;margin-bottom:4px;">
+          <button class="today-btn" onclick="goToToday()">Today</button>
+        </div>
+        <div class="cal-grid" id="inline-cal-grid"></div>
+      </div>
+
+      <button class="add-block-fab" id="add-block-fab" onclick="openBlockForm()">+ Add</button>
 
       <div id="blocks-list"></div>
 
@@ -1975,14 +2004,9 @@ function setEntry(d, data) {
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
-function renderCalendar() {
-  const grid = document.getElementById('cal-grid');
-  const label = document.getElementById('cal-month-label');
-  label.textContent = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-
+// Populate a single cal-grid element with the current month's days.
+function _fillCalGrid(grid) {
   grid.innerHTML = '';
-
-  // Day labels
   DAYS.forEach(d => {
     const el = document.createElement('div');
     el.className = 'cal-day-label';
@@ -1990,12 +2014,11 @@ function renderCalendar() {
     grid.appendChild(el);
   });
 
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+  const firstDay    = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 0).getDate();
-  const daysInPrev = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
-  const today = new Date();
+  const daysInPrev  = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
+  const today       = new Date();
 
-  // Previous month overflow
   for (let i = firstDay - 1; i >= 0; i--) {
     const el = document.createElement('div');
     el.className = 'cal-day other-month';
@@ -2003,21 +2026,17 @@ function renderCalendar() {
     grid.appendChild(el);
   }
 
-  // Current month days
   for (let d = 1; d <= daysInMonth; d++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day';
-    el.innerHTML = `<span class="cal-day-num">${d}</span>`;
-
+    const el       = document.createElement('div');
+    el.className   = 'cal-day';
+    el.innerHTML   = `<span class="cal-day-num">${d}</span>`;
     const thisDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
-    const key = dateKey(thisDate);
+    const key      = dateKey(thisDate);
 
     if (d === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear()) {
       el.classList.add('today');
     }
-    if (dateKey(thisDate) === dateKey(selectedDate)) {
-      el.classList.add('selected');
-    }
+    if (dateKey(thisDate) === dateKey(selectedDate)) el.classList.add('selected');
     if (entries[key] && (entries[key].blocks?.some(b => b.note || b.piece) || (entries[key].recordings && entries[key].recordings.length))) {
       el.classList.add('has-entry');
     }
@@ -2029,22 +2048,34 @@ function renderCalendar() {
     } else if (doneGoal) {
       el.classList.add('has-goal-done');
     }
-
     el.onclick = () => selectDate(thisDate);
     grid.appendChild(el);
   }
 }
 
+function renderCalendar() {
+  const monthText = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // Header calendar
+  document.getElementById('cal-month-label').textContent = monthText;
+  _fillCalGrid(document.getElementById('cal-grid'));
+
+  // Inline calendar (only when visible — mobile Log view)
+  const inlinePanel = document.getElementById('inline-cal-panel');
+  if (inlinePanel && inlinePanel.style.display !== 'none') {
+    document.getElementById('inline-cal-month-label').textContent = monthText;
+    _fillCalGrid(document.getElementById('inline-cal-grid'));
+  }
+}
+
 function selectDate(d) {
   selectedDate = new Date(d);
-  // On mobile in Log view, hide the calendar again after a date is chosen
-  // (it was opened as a temporary overlay via openDatePicker).
-  const isMobile = window.innerWidth <= 430;
-  if (isMobile) {
-    const activeView = (document.querySelector('.view.active') || {}).id || '';
-    if (activeView === 'view-journal') {
-      document.getElementById('cal-section').style.display = 'none';
-    }
+  // Close the inline calendar and re-enable Add after the user picks a date.
+  const panel  = document.getElementById('inline-cal-panel');
+  const addBtn = document.getElementById('add-block-fab');
+  if (panel && panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    if (addBtn) addBtn.removeAttribute('data-cal-open');
   }
   renderCalendar();
   loadJournalForDate();
@@ -2817,15 +2848,21 @@ function deleteGoal(id) {
 
 function openDatePicker() {
   if (window.matchMedia('(pointer: fine)').matches) return;
-  // On mobile (touch): toggle the header calendar instead of relying on
-  // input.showPicker(), which fails silently on many mobile browsers
-  // (notably iOS Safari) when the input is hidden/zero-sized.
-  const calSection = document.getElementById('cal-section');
-  if (calSection.style.display === 'none') {
-    calSection.style.display = '';
+  // On mobile: toggle the inline calendar below the date label.
+  // While it's open, the Add button is disabled so the user picks a date first.
+  const panel  = document.getElementById('inline-cal-panel');
+  const addBtn = document.getElementById('add-block-fab');
+  if (panel.style.display === 'none') {
+    // Open
+    panel.style.display = '';
+    if (addBtn) addBtn.setAttribute('data-cal-open', 'true');
     renderCalendar();
+    // Scroll the panel into view smoothly
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } else {
-    calSection.style.display = 'none';
+    // Close (tap date label again to dismiss)
+    panel.style.display = 'none';
+    if (addBtn) addBtn.removeAttribute('data-cal-open');
   }
 }
 
