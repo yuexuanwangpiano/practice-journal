@@ -806,22 +806,11 @@
     max-width: 430px;
     background: var(--bg);
     border-radius: 16px 16px 0 0;
-    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+    padding: 16px 24px calc(32px + env(safe-area-inset-bottom));
     z-index: 1101;
     transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   }
   .date-picker-panel.open { transform: translateX(-50%) translateY(0); }
-  .date-picker-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.05em;
-  }
-  /* date picker uses same cal-grid/cal-day styles */
-  #dp-grid .cal-day.selected { background: var(--text); color: #fff; border-radius: 50%; }
 
   /* ---- Fireworks ---- */
   .firework-wrap {
@@ -1591,13 +1580,11 @@
 
     <!-- Date Picker Overlay (mobile date switching) -->
     <div class="date-picker-overlay" id="date-picker-overlay" onclick="closeDatePicker()"></div>
-    <div class="date-picker-panel" id="date-picker-panel">
-      <div class="date-picker-header">
-        <button class="cal-arrow" onclick="dpChangeMonth(-1);event.stopPropagation()">‹</button>
-        <span id="dp-title"></span>
-        <button class="cal-arrow" onclick="dpChangeMonth(1);event.stopPropagation()">›</button>
-      </div>
-      <div class="cal-grid" id="dp-grid"></div>
+    <div class="date-picker-panel" id="date-picker-panel" onclick="event.stopPropagation()">
+      <div class="goal-sheet-handle"></div>
+      <div class="section-label" style="margin-bottom:8px;">Select Date</div>
+      <input type="date" id="dp-date-input" class="goal-date-input" style="margin-bottom:16px;">
+      <button class="save-btn" onclick="applyDatePicker()">Go</button>
     </div>
 
     <!-- This Week View -->
@@ -2856,13 +2843,9 @@ function deleteGoal(id) {
   renderGoals();
 }
 
-let dpDate = new Date(); // tracks the month shown in date picker
-
 function openDatePicker() {
-  // Only on mobile (touch)
   if (window.matchMedia('(pointer: fine)').matches) return;
-  dpDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-  renderDpGrid();
+  document.getElementById('dp-date-input').value = dateKey(selectedDate);
   document.getElementById('date-picker-overlay').classList.add('open');
   document.getElementById('date-picker-panel').classList.add('open');
 }
@@ -2872,39 +2855,15 @@ function closeDatePicker() {
   document.getElementById('date-picker-panel').classList.remove('open');
 }
 
-function dpChangeMonth(dir) {
-  dpDate = new Date(dpDate.getFullYear(), dpDate.getMonth() + dir, 1);
-  renderDpGrid();
+function applyDatePicker() {
+  const val = document.getElementById('dp-date-input').value;
+  if (!val) { closeDatePicker(); return; }
+  const [y, m, d] = val.split('-').map(Number);
+  selectedDate = new Date(y, m - 1, d);
+  closeDatePicker();
+  renderCalendar();
+  loadJournalForDate();
 }
-
-function renderDpGrid() {
-  const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const DAYS = ['S','M','T','W','T','F','S'];
-  document.getElementById('dp-title').textContent = MONTHS_FULL[dpDate.getMonth()] + ' ' + dpDate.getFullYear();
-
-  const grid = document.getElementById('dp-grid');
-  grid.innerHTML = '';
-
-  // Day labels
-  DAYS.forEach(d => {
-    const lbl = document.createElement('div');
-    lbl.className = 'cal-day-label';
-    lbl.textContent = d;
-    grid.appendChild(lbl);
-  });
-
-  const firstDay = new Date(dpDate.getFullYear(), dpDate.getMonth(), 1).getDay();
-  const daysInMonth = new Date(dpDate.getFullYear(), dpDate.getMonth() + 1, 0).getDate();
-  const daysInPrev = new Date(dpDate.getFullYear(), dpDate.getMonth(), 0).getDate();
-  const today = new Date();
-
-  // Prev month overflow
-  for (let i = firstDay - 1; i >= 0; i--) {
-    const el = document.createElement('div');
-    el.className = 'cal-day other-month';
-    el.innerHTML = `<span class="cal-day-num">${daysInPrev - i}</span>`;
-    grid.appendChild(el);
-  }
 
   // Current month days
   for (let d = 1; d <= daysInMonth; d++) {
@@ -3202,8 +3161,8 @@ window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
 window.openDatePicker = openDatePicker;
+window.applyDatePicker = applyDatePicker;
 window.closeDatePicker = closeDatePicker;
-window.dpChangeMonth = dpChangeMonth;
 window.launchFirework = launchFirework;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
