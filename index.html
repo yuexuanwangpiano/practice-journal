@@ -725,6 +725,28 @@
 
   .goal-delete { display: none; }
 
+  /* ---- Confetti ---- */
+  .confetti-wrap {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    top: -12px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+    opacity: 0.9;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0)      rotateZ(0deg)   rotateX(0deg);   opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(110vh)  rotateZ(720deg) rotateX(360deg); opacity: 0; }
+  }
+
   .add-block-fab {
     display: block;
     width: 100%;
@@ -2845,6 +2867,7 @@ window.deleteRecording = deleteRecording;
 window.addRecordingLink = addRecordingLink;
 window.addGoal = addGoal;
 window.toggleGoal = toggleGoal;
+window.launchConfetti = launchConfetti;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
 window.closeDayModal = closeDayModal;
