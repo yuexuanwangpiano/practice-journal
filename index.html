@@ -2050,6 +2050,15 @@ function renderCalendar() {
 
 function selectDate(d) {
   selectedDate = new Date(d);
+  // On mobile in Log view, hide the calendar again after a date is chosen
+  // (it was opened as a temporary overlay via openDatePicker).
+  const isMobile = window.innerWidth <= 430;
+  if (isMobile) {
+    const activeView = (document.querySelector('.view.active') || {}).id || '';
+    if (activeView === 'view-journal') {
+      document.getElementById('cal-section').style.display = 'none';
+    }
+  }
   renderCalendar();
   loadJournalForDate();
 }
@@ -2821,9 +2830,16 @@ function deleteGoal(id) {
 
 function openDatePicker() {
   if (window.matchMedia('(pointer: fine)').matches) return;
-  const input = document.getElementById('dp-date-input');
-  input.value = dateKey(selectedDate);
-  try { input.showPicker(); } catch(e) { input.click(); }
+  // On mobile (touch): toggle the header calendar instead of relying on
+  // input.showPicker(), which fails silently on many mobile browsers
+  // (notably iOS Safari) when the input is hidden/zero-sized.
+  const calSection = document.getElementById('cal-section');
+  if (calSection.style.display === 'none') {
+    calSection.style.display = '';
+    renderCalendar();
+  } else {
+    calSection.style.display = 'none';
+  }
 }
 
 function closeDatePicker() {} // no-op, picker closes itself
