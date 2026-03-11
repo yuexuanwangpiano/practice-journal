@@ -258,9 +258,6 @@
   .block-saved-view {
     display: none;
   }
-  .practice-block.is-saved .block-saved-view {
-    display: block;
-  }
   .practice-block.is-saved .block-edit-view {
     display: none;
   }
@@ -271,14 +268,13 @@
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px 6px;
+    padding: 2px 8px;
     font-size: 1.1rem;
     color: var(--muted);
     line-height: 1;
     border-radius: 4px;
     flex-shrink: 0;
     transition: color 0.15s, background 0.15s;
-    position: relative;
   }
   .item-dots-btn:hover { color: var(--text); background: var(--border); }
 
@@ -288,15 +284,13 @@
   }
 
   .dots-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 4px);
+    position: fixed;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    z-index: 200;
-    min-width: 110px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 2000;
+    min-width: 120px;
     overflow: hidden;
     display: none;
   }
@@ -2001,14 +1995,19 @@ function createBlockEl(data, index) {
     deleteBlockFromSheet_byIndex(index);
   });
   menu.appendChild(delBtn);
+  document.body.appendChild(menu);
 
   dotsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     const isOpen = menu.classList.contains('open');
     closeAllDotsMenus(null);
-    if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+    if (!isOpen) {
+      const r = dotsBtn.getBoundingClientRect();
+      menu.style.top = (r.bottom + 4) + 'px';
+      menu.style.right = (window.innerWidth - r.right) + 'px';
+      menu.classList.add('open');
+    }
   });
-  dotsBtn.appendChild(menu);
 
   savedView.appendChild(content);
   savedView.appendChild(dotsBtn);
@@ -2104,14 +2103,19 @@ function renderRecordings(recordings) {
       deleteRecording(i);
     });
     menu.appendChild(delBtn);
+    document.body.appendChild(menu);
 
     dotsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isOpen = menu.classList.contains('open');
       closeAllDotsMenus(null);
-      if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+      if (!isOpen) {
+        const r = dotsBtn.getBoundingClientRect();
+        menu.style.top = (r.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - r.right) + 'px';
+        menu.classList.add('open');
+      }
     });
-    dotsBtn.appendChild(menu);
 
     item.appendChild(icon);
     item.appendChild(info);
@@ -2632,13 +2636,16 @@ function launchConfetti() {
   setTimeout(() => wrap.remove(), 3500);
 }
 
-// Close any open dots menus
+// Close any open dots menus except the given one
 function closeAllDotsMenus(except) {
   document.querySelectorAll('.dots-menu.open').forEach(m => {
     if (m !== except) m.classList.remove('open');
   });
 }
-document.addEventListener('click', () => closeAllDotsMenus(null));
+// Global click closes all menus (fires after stopPropagation on btn is handled)
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.item-dots-btn')) closeAllDotsMenus(null);
+});
 
 function renderGoals() {
   const list = document.getElementById('goals-list');
@@ -2719,14 +2726,19 @@ function renderGoals() {
       setTimeout(() => deleteGoal(g.id), 320);
     });
     menu.appendChild(delBtn);
+    document.body.appendChild(menu);
 
     dotsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isOpen = menu.classList.contains('open');
       closeAllDotsMenus(null);
-      if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+      if (!isOpen) {
+        const r = dotsBtn.getBoundingClientRect();
+        menu.style.top = (r.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - r.right) + 'px';
+        menu.classList.add('open');
+      }
     });
-    dotsBtn.appendChild(menu);
 
     item.appendChild(dotsBtn);
     wrap.appendChild(bg);
