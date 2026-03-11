@@ -782,35 +782,15 @@
   /* ---- Date Picker Overlay ---- */
   .selected-date::after {
     content: ' ▾';
-    font-size: 0.9rem;
-    opacity: 0.45;
+    font-size: 1.4rem;
+    opacity: 0.55;
+    vertical-align: middle;
   }
   @media (pointer: fine) {
     .selected-date::after { display: none; }
     .selected-date { cursor: default !important; }
   }
-  .date-picker-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.35);
-    z-index: 1100;
-  }
-  .date-picker-overlay.open { display: block; }
-  .date-picker-panel {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%) translateY(100%);
-    width: 100%;
-    max-width: 430px;
-    background: var(--bg);
-    border-radius: 16px 16px 0 0;
-    padding: 16px 24px calc(32px + env(safe-area-inset-bottom));
-    z-index: 1101;
-    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  .date-picker-panel.open { transform: translateX(-50%) translateY(0); }
+
 
   /* ---- Fireworks ---- */
   .firework-wrap {
@@ -1580,12 +1560,8 @@
     </div>
 
     <!-- Date Picker Overlay (mobile date switching) -->
-    <div class="date-picker-overlay" id="date-picker-overlay" onclick="closeDatePicker()"></div>
-    <div class="date-picker-panel" id="date-picker-panel" onclick="event.stopPropagation()">
-      <div class="goal-sheet-handle"></div>
-      <div class="section-label" style="margin-bottom:8px;">Select Date</div>
-      <input type="date" id="dp-date-input" class="goal-date-input" style="margin-bottom:4px;" onchange="applyDatePicker()">
-    </div>
+    <!-- Hidden date input for mobile date switching -->
+    <input type="date" id="dp-date-input" style="position:fixed;opacity:0;pointer-events:none;top:0;left:0;width:0;height:0;" onchange="applyDatePicker()">
 
     <!-- This Week View -->
     <div class="view" id="view-stats">
@@ -2847,16 +2823,10 @@ function openDatePicker() {
   if (window.matchMedia('(pointer: fine)').matches) return;
   const input = document.getElementById('dp-date-input');
   input.value = dateKey(selectedDate);
-  document.getElementById('date-picker-overlay').classList.add('open');
-  document.getElementById('date-picker-panel').classList.add('open');
-  // Auto-open the native date picker after the panel animates in
-  setTimeout(() => { try { input.showPicker(); } catch(e) { input.click(); } }, 350);
+  try { input.showPicker(); } catch(e) { input.click(); }
 }
 
-function closeDatePicker() {
-  document.getElementById('date-picker-overlay').classList.remove('open');
-  document.getElementById('date-picker-panel').classList.remove('open');
-}
+function closeDatePicker() {} // no-op, picker closes itself
 
 function applyDatePicker() {
   const val = document.getElementById('dp-date-input').value;
