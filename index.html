@@ -1831,9 +1831,18 @@ async function showApp() {
   await loadGoals();
 
   document.querySelector('.app').style.visibility = 'visible';
-  switchView('journal');
-  renderCalendar();
-  loadJournalForDate();
+  const onMobile = !window.matchMedia('(pointer: fine)').matches;
+  if (onMobile) {
+    switchView('cal');                    // sets calViewMonth = null (year view)
+    const now = new Date();
+    calViewYear = now.getFullYear();
+    calViewMonth = now.getMonth();        // override to current month
+    renderCalView();                      // re-render in month drill-down
+  } else {
+    switchView('journal');
+    renderCalendar();
+    loadJournalForDate();
+  }
 }
 
 async function checkSession() {
