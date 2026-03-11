@@ -265,6 +265,68 @@
     display: none;
   }
 
+  /* ── 3-dot menu (PC hover only) ── */
+  .item-dots-btn {
+    display: none; /* hidden on touch devices */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 1.1rem;
+    color: var(--muted);
+    line-height: 1;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .item-dots-btn:hover { color: var(--text); background: var(--border); }
+
+  /* Show dots button only on pointer:fine (mouse) devices */
+  @media (pointer: fine) {
+    .item-dots-btn { display: flex; align-items: center; }
+  }
+
+  .dots-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    z-index: 200;
+    min-width: 110px;
+    overflow: hidden;
+    display: none;
+  }
+  .dots-menu.open { display: block; }
+  .dots-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.12s;
+  }
+  .dots-menu-item:hover { background: var(--soft); }
+  .dots-menu-item.danger { color: #c0392b; }
+  .dots-menu-item.danger:hover { background: #fdf0ee; }
+
+  /* practice-block saved view: flex so dots button can sit on the right */
+  .practice-block.is-saved .block-saved-view {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .block-saved-content { flex: 1; min-width: 0; }
+
   .block-saved-piece {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1rem;
@@ -949,8 +1011,7 @@
     margin: 0 auto 20px;
   }
 
-  /* ---- Year Animation ---- */
-  /* ---- Login Animation: Page-Turn Calendar ---- */
+  /* ---- Login Animation ---- */
   .year-anim {
     display: none;
     position: fixed;
@@ -963,151 +1024,128 @@
   }
   .year-anim.active { display: flex; }
 
-  .cal-anim-wrap {
-    width: 260px;
-    height: 310px;
-    perspective: 900px;
-    position: relative;
+  /* Scaler: the whole year grid sits inside this; JS scales it up toward
+     the current-month cell to create the zoom-in effect */
+  #ya-scaler {
+    width: 300px;
+    transition: transform 1.8s cubic-bezier(0.4,0,0.15,1),
+                opacity  0.6s ease 1.2s;
   }
 
-  /* The stack of pages sitting underneath */
-  .cal-page-stack {
-    position: absolute;
-    inset: 0;
-    border-radius: 4px 4px 6px 6px;
-  }
-  .cal-page-stack::before,
-  .cal-page-stack::after {
-    content: '';
-    position: absolute;
-    left: 2px; right: 2px; bottom: -3px;
-    height: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px 4px 6px 6px;
-  }
-  .cal-page-stack::after {
-    left: 4px; right: 4px; bottom: -6px;
-    background: var(--bg);
-  }
-
-  /* Each calendar page */
-  .cal-page {
-    position: absolute;
-    inset: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px 4px 6px 6px;
-    padding: 16px 16px 18px;
-    transform-origin: top center;
-    backface-visibility: hidden;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    overflow: hidden;
-  }
-
-  /* The page that is turning away (flipping up and over) */
-  .cal-page.turning {
-    animation: pageTurn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    transform-style: preserve-3d;
-    z-index: 10;
-  }
-
-  /* The final page (current month) that fades gently in */
-  .cal-page.final {
-    z-index: 5;
+  /* 3-column year grid */
+  #ya-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.5s ease;
   }
-  .cal-page.final.show { opacity: 1; }
+  #ya-grid.show { opacity: 1; }
 
-  @keyframes pageTurn {
-    0%   { transform: rotateX(0deg);    box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    30%  { transform: rotateX(-70deg);  box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
-    55%  { transform: rotateX(-90deg);  box-shadow: 0 8px 24px rgba(0,0,0,0.10); opacity: 1; }
-    100% { transform: rotateX(-168deg); box-shadow: none; opacity: 0; }
+  /* Each small month card */
+  .ya-month {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 6px 5px 7px;
+    background: var(--surface);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+  }
+  .ya-month.current {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 2px 10px rgba(184,154,106,0.25);
   }
 
-  /* Whole wrap fades out at the end */
-  .cal-anim-wrap.fade-out {
-    transition: opacity 0.45s ease;
-    opacity: 0;
+  .ya-month-name {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.42rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 4px;
   }
+  .ya-month.current .ya-month-name { color: var(--accent); }
 
-  /* Spiral binding holes at top */
-  .cal-binding {
-    display: flex;
-    justify-content: space-around;
-    padding: 0 20px;
-    margin-bottom: 12px;
+  .ya-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0px;
   }
-  .cal-hole {
-    width: 8px;
-    height: 8px;
+  .ya-mini-cell {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.38rem;
+    font-weight: 300;
+    text-align: center;
+    padding: 1px 0;
+    line-height: 1.1;
+    color: var(--text);
     border-radius: 50%;
-    background: var(--bg);
-    border: 1px solid var(--border);
   }
+  .ya-mini-cell.lbl  { color: var(--muted); font-size: 0.34rem; }
+  .ya-mini-cell.emp  { visibility: hidden; }
+  .ya-mini-cell.tod  { background: var(--text); color: var(--bg); border-radius: 50%; }
+  .ya-mini-cell.cur  { background: rgba(184,154,106,0.18); border-radius: 2px; }
 
-  /* Month header on each page */
-  .cal-page-month {
+  /* Full month page that blooms over the top after the zoom */
+  #ya-fullpage {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+  }
+  #ya-fullpage.show { opacity: 1; }
+  #ya-fullpage-inner {
+    width: 300px;
+  }
+  .ya-fp-month {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem;
+    font-size: 2rem;
     font-weight: 300;
     letter-spacing: 0.1em;
     text-align: center;
     color: var(--text);
-    line-height: 1;
     margin-bottom: 2px;
   }
-  .cal-page-year {
+  .ya-fp-year {
     font-family: 'Jost', sans-serif;
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    text-align: center;
-    color: var(--muted);
-    margin-bottom: 12px;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 14px;
   }
-  .cal-page-divider {
+  .ya-fp-divider {
     height: 1px;
     background: var(--border);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
-
-  /* Calendar grid on each page */
-  .cal-page-grid {
+  .ya-fp-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    gap: 3px;
   }
-  .cal-page-cell {
+  .ya-fp-cell {
     font-family: 'Jost', sans-serif;
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 300;
     text-align: center;
-    padding: 4px 0;
+    padding: 5px 0;
     line-height: 1.2;
     color: var(--text);
     border-radius: 50%;
   }
-  .cal-page-cell.label {
-    font-size: 0.58rem;
-    color: var(--muted);
-    font-weight: 400;
-    letter-spacing: 0.05em;
-    padding-bottom: 6px;
-  }
-  .cal-page-cell.empty { color: transparent; }
-  .cal-page-cell.today-cell {
-    background: var(--text);
-    color: var(--bg);
-    font-weight: 500;
-  }
-  .cal-page-cell.weekend { color: var(--muted); }
-
-  @keyframes fadeInUp {
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .ya-fp-cell.lbl { font-size: 0.6rem; color: var(--muted); padding-bottom: 8px; }
+  .ya-fp-cell.emp { visibility: hidden; }
+  .ya-fp-cell.tod { background: var(--text); color: var(--bg); font-weight: 500; }
+  .ya-fp-cell.wkd { color: var(--muted); }
 
   /* ---- Loading Screen ---- */
     display: flex;
@@ -1546,7 +1584,7 @@
 
 <!-- Year Animation Overlay -->
 <div class="year-anim" id="year-anim">
-  <div class="year-anim-inner" id="year-anim-inner"></div>
+  <div style="position:relative;width:300px;height:360px;display:flex;align-items:center;justify-content:center;" id="year-anim-inner"></div>
 </div>
 
 <!-- Day Detail Modal -->
@@ -1634,101 +1672,109 @@ function logout() {
 
 function playYearAnimation(onDone) {
   const overlay = document.getElementById('year-anim');
-  const inner = document.getElementById('year-anim-inner');
-  const MONTHS = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  const DAYS = ['S','M','T','W','T','F','S'];
-  const now = new Date();
+  const inner   = document.getElementById('year-anim-inner');
+  const MONTHS  = ['January','February','March','April','May','June',
+                   'July','August','September','October','November','December'];
+  const MSHORT  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS    = ['S','M','T','W','T','F','S'];
+  const now      = new Date();
   const thisYear = now.getFullYear();
-  const thisMonth = now.getMonth();
-  const todayDate = now.getDate();
+  const thisMonth= now.getMonth();
+  const today    = now.getDate();
 
-  // Build a calendar page HTML for a given month
-  function buildPage(m) {
-    const firstDay = new Date(thisYear, m, 1).getDay();
-    const daysInMonth = new Date(thisYear, m + 1, 0).getDate();
-    const isCurrent = (m === thisMonth);
-
-    let grid = '<div class="cal-page-grid">';
-    DAYS.forEach(d => { grid += `<div class="cal-page-cell label">${d}</div>`; });
-    for (let i = 0; i < firstDay; i++) grid += `<div class="cal-page-cell empty"></div>`;
-    for (let d = 1; d <= daysInMonth; d++) {
-      let cls = 'cal-page-cell';
-      const dow = (firstDay + d - 1) % 7;
-      if (isCurrent && d === todayDate) cls += ' today-cell';
-      else if (dow === 0 || dow === 6) cls += ' weekend';
-      grid += `<div class="${cls}">${d}</div>`;
+  /* ── build mini month card ── */
+  function miniMonth(m) {
+    const firstDay    = new Date(thisYear, m, 1).getDay();
+    const daysInMonth = new Date(thisYear, m+1, 0).getDate();
+    const isCur = m === thisMonth;
+    let cells = DAYS.map(d => `<div class="ya-mini-cell lbl">${d}</div>`).join('');
+    for (let i=0; i<firstDay; i++) cells += `<div class="ya-mini-cell emp"></div>`;
+    for (let d=1; d<=daysInMonth; d++) {
+      let cls = 'ya-mini-cell';
+      if (isCur && d===today) cls += ' tod';
+      else if (isCur)         cls += ' cur';
+      cells += `<div class="${cls}">${d}</div>`;
     }
-    grid += '</div>';
-
     return `
-      <div class="cal-binding">${Array(6).fill('<div class="cal-hole"></div>').join('')}</div>
-      <div class="cal-page-month">${MONTHS[m]}</div>
-      <div class="cal-page-year">${thisYear}</div>
-      <div class="cal-page-divider"></div>
-      ${grid}
-    `;
+      <div class="ya-month${isCur?' current':''}" id="ya-m${m}">
+        <div class="ya-month-name">${MSHORT[m]}</div>
+        <div class="ya-mini-grid">${cells}</div>
+      </div>`;
   }
 
-  // Show 2 pages before current month, then current
-  const pagesToShow = [];
-  for (let i = 2; i >= 1; i--) {
-    const m = (thisMonth - i + 12) % 12;
-    pagesToShow.push(m);
+  /* ── build full-page month ── */
+  function fullMonth(m) {
+    const firstDay    = new Date(thisYear, m, 1).getDay();
+    const daysInMonth = new Date(thisYear, m+1, 0).getDate();
+    let cells = DAYS.map(d => `<div class="ya-fp-cell lbl">${d}</div>`).join('');
+    for (let i=0; i<firstDay; i++) cells += `<div class="ya-fp-cell emp"></div>`;
+    for (let d=1; d<=daysInMonth; d++) {
+      const dow = (firstDay+d-1)%7;
+      let cls = 'ya-fp-cell';
+      if (d===today)            cls += ' tod';
+      else if (dow===0||dow===6) cls += ' wkd';
+      cells += `<div class="${cls}">${d}</div>`;
+    }
+    return `
+      <div class="ya-fp-month">${MONTHS[m]}</div>
+      <div class="ya-fp-year">${thisYear}</div>
+      <div class="ya-fp-divider"></div>
+      <div class="ya-fp-grid">${cells}</div>`;
   }
-  pagesToShow.push(thisMonth); // final page
 
-  inner.innerHTML = '';
-  const wrap = document.createElement('div');
-  wrap.className = 'cal-anim-wrap';
+  /* ── DOM ── */
+  inner.innerHTML = `
+    <div id="ya-scaler">
+      <div id="ya-grid">${Array.from({length:12},(_,i)=>miniMonth(i)).join('')}</div>
+    </div>
+    <div id="ya-fullpage"><div id="ya-fullpage-inner"></div></div>`;
 
-  // Stack shadow
-  const stack = document.createElement('div');
-  stack.className = 'cal-page-stack';
-  wrap.appendChild(stack);
+  const scaler   = inner.querySelector('#ya-scaler');
+  const grid     = inner.querySelector('#ya-grid');
+  const fullpage = inner.querySelector('#ya-fullpage');
+  const fpInner  = inner.querySelector('#ya-fullpage-inner');
 
-  // Build all pages, stacked on top of each other
-  const pageEls = [];
-  pagesToShow.forEach((m, idx) => {
-    const page = document.createElement('div');
-    page.className = 'cal-page';
-    if (idx === pagesToShow.length - 1) page.classList.add('final');
-    page.innerHTML = buildPage(m);
-    wrap.appendChild(page);
-    pageEls.push(page);
-  });
-
-  inner.appendChild(wrap);
   overlay.classList.add('active');
 
-  // Flip pages one by one, revealing the next underneath
-  // Pages 0 and 1 are "previous months" that flip away
-  // Page 2 is current month — fades in after last flip
-  const flipDelay = 600; // ms between flips
-  const flipDuration = 600;
-
-  pageEls.slice(0, -1).forEach((page, i) => {
-    setTimeout(() => {
-      page.classList.add('turning');
-    }, 300 + i * flipDelay);
+  /* ── Phase 1: grid fades in (t=0→500ms) ── */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { grid.classList.add('show'); });
   });
 
-  // Show final (current month) page as last page flips
-  const finalPage = pageEls[pageEls.length - 1];
+  /* ── Phase 2: zoom into current-month card (t=900ms) ──
+     Figure out where the current month sits in the 3-col grid so we can
+     set the transform-origin to that cell's center before scaling up.   */
   setTimeout(() => {
-    finalPage.classList.add('show');
-  }, 300 + (pageEls.length - 1) * flipDelay);
+    const col = thisMonth % 3;          // 0,1,2
+    const row = Math.floor(thisMonth/3);// 0,1,2,3
+    // origin as % of the 300-px scaler width/height
+    // Each col is ~33.33%, each row is roughly 25% of total grid height
+    const ox = (col/3 + 1/6) * 100;    // centre of column
+    const oy = (row/4 + 1/8) * 100;    // centre of row (4 rows total)
+    scaler.style.transformOrigin = `${ox}% ${oy}%`;
+    scaler.style.transform = 'scale(8)';
+    scaler.style.opacity   = '0';
+  }, 900);
 
-  // Fade entire wrap out, then call onDone
-  const totalDur = 300 + pageEls.length * flipDelay + 700;
+  /* ── Phase 3: full-month page blooms in (t=2900ms) ── */
   setTimeout(() => {
-    wrap.classList.add('fade-out');
-  }, totalDur);
+    fpInner.innerHTML = fullMonth(thisMonth);
+    fullpage.classList.add('show');
+  }, 2900);
+
+  /* ── Phase 4: fade everything out and finish (t=3900ms) ── */
+  setTimeout(() => {
+    overlay.style.transition = 'opacity 0.45s ease';
+    overlay.style.opacity = '0';
+  }, 3900);
 
   setTimeout(() => {
     overlay.classList.remove('active');
+    overlay.style.opacity = '';
+    overlay.style.transition = '';
+    inner.innerHTML = '';
     onDone();
-  }, totalDur + 500);
+  }, 4380);
 }
 
 async function showApp() {
@@ -1925,19 +1971,48 @@ function createBlockEl(data, index) {
   const block = document.createElement('div');
   block.className = 'practice-block is-saved';
 
-  block.innerHTML = `
-    <div class="block-saved-view">
-      <div class="block-saved-piece">${data.piece || '<span style="color:var(--border);font-family:Jost,sans-serif;font-size:0.8rem;">No piece</span>'}</div>
-      ${data.note ? `<div class="block-saved-note">${data.note}</div>` : ''}
-      <div class="block-saved-hint">Tap to edit</div>
-    </div>
+  const savedView = document.createElement('div');
+  savedView.className = 'block-saved-view';
+
+  const content = document.createElement('div');
+  content.className = 'block-saved-content';
+  content.innerHTML = `
+    <div class="block-saved-piece">${data.piece || '<span style="color:var(--border);font-family:Jost,sans-serif;font-size:0.8rem;">No piece</span>'}</div>
+    ${data.note ? `<div class="block-saved-note">${data.note}</div>` : ''}
+    <div class="block-saved-hint">Tap to edit</div>
   `;
+  content.addEventListener('click', () => openBlockForm(index));
 
-  // Tap to open sheet pre-filled for editing
-  block.querySelector('.block-saved-view').addEventListener('click', () => {
-    openBlockForm(index);
+  // ⋯ button
+  const dotsBtn = document.createElement('button');
+  dotsBtn.className = 'item-dots-btn';
+  dotsBtn.textContent = '⋯';
+  dotsBtn.title = 'Options';
+
+  const menu = document.createElement('div');
+  menu.className = 'dots-menu';
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'dots-menu-item danger';
+  delBtn.textContent = 'Delete';
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.remove('open');
+    deleteBlockFromSheet_byIndex(index);
   });
+  menu.appendChild(delBtn);
 
+  dotsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = menu.classList.contains('open');
+    closeAllDotsMenus(null);
+    if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+  });
+  dotsBtn.appendChild(menu);
+
+  savedView.appendChild(content);
+  savedView.appendChild(dotsBtn);
+  block.appendChild(savedView);
   list.appendChild(block);
 }
 
@@ -2011,17 +2086,46 @@ function renderRecordings(recordings) {
     info.appendChild(nameEl);
     info.appendChild(urlPreview);
 
+    // ⋯ button
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'item-dots-btn';
+    dotsBtn.textContent = '⋯';
+    dotsBtn.title = 'Options';
+
+    const menu = document.createElement('div');
+    menu.className = 'dots-menu';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dots-menu-item danger';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.remove('open');
+      deleteRecording(i);
+    });
+    menu.appendChild(delBtn);
+
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      closeAllDotsMenus(null);
+      if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+    });
+    dotsBtn.appendChild(menu);
+
     item.appendChild(icon);
     item.appendChild(info);
+    item.appendChild(dotsBtn);
     wrap.appendChild(deleteBg);
     wrap.appendChild(item);
     list.appendChild(wrap);
 
-    // Swipe left to delete
+    // Swipe left to delete (touch only)
     let startX = 0, startY = 0, currentX = 0, isSwiping = false;
     const THRESHOLD = 72;
 
     function onStart(e) {
+      if (e.type === 'mousedown' && window.matchMedia('(pointer: fine)').matches) return;
       startX = e.touches ? e.touches[0].clientX : e.clientX;
       startY = e.touches ? e.touches[0].clientY : e.clientY;
       currentX = 0;
@@ -2054,9 +2158,6 @@ function renderRecordings(recordings) {
     item.addEventListener('touchstart', onStart, { passive: true });
     item.addEventListener('touchmove', onMove, { passive: true });
     item.addEventListener('touchend', onEnd);
-    item.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
   });
 }
 
@@ -2464,6 +2565,14 @@ function deleteBlockFromSheet() {
   renderBlocks(entry.blocks);
 }
 
+function deleteBlockFromSheet_byIndex(index) {
+  const entry = getEntry(selectedDate);
+  entry.blocks.splice(index, 1);
+  setEntry(selectedDate, entry);
+  renderCalendar();
+  renderBlocks(entry.blocks);
+}
+
 function openGoalForm() {
   document.getElementById('goal-sheet-overlay').classList.add('open');
   document.getElementById('goal-sheet').classList.add('open');
@@ -2523,6 +2632,14 @@ function launchConfetti() {
   setTimeout(() => wrap.remove(), 3500);
 }
 
+// Close any open dots menus
+function closeAllDotsMenus(except) {
+  document.querySelectorAll('.dots-menu.open').forEach(m => {
+    if (m !== except) m.classList.remove('open');
+  });
+}
+document.addEventListener('click', () => closeAllDotsMenus(null));
+
 function renderGoals() {
   const list = document.getElementById('goals-list');
   list.innerHTML = '';
@@ -2580,16 +2697,49 @@ function renderGoals() {
 
     item.appendChild(check);
     item.appendChild(body);
+
+    // ⋯ button (PC)
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'item-dots-btn';
+    dotsBtn.textContent = '⋯';
+    dotsBtn.title = 'Options';
+
+    const menu = document.createElement('div');
+    menu.className = 'dots-menu';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dots-menu-item danger';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.remove('open');
+      wrap.style.transition = 'max-height 0.3s ease, opacity 0.3s ease, margin-bottom 0.3s ease';
+      wrap.style.maxHeight = wrap.offsetHeight + 'px';
+      setTimeout(() => { wrap.style.maxHeight = '0'; wrap.style.opacity = '0'; wrap.style.marginBottom = '0'; }, 10);
+      setTimeout(() => deleteGoal(g.id), 320);
+    });
+    menu.appendChild(delBtn);
+
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      closeAllDotsMenus(null);
+      if (!isOpen) { menu.classList.add('open'); closeAllDotsMenus(menu); }
+    });
+    dotsBtn.appendChild(menu);
+
+    item.appendChild(dotsBtn);
     wrap.appendChild(bg);
     wrap.appendChild(item);
     list.appendChild(wrap);
 
-    // Swipe logic
+    // Swipe logic (touch only)
     let startX = 0, currentX = 0, swiping = false;
     const DELETE_THRESHOLD = 80;
     const DONE_THRESHOLD = 80;
 
     function onStart(e) {
+      if (e.type === 'mousedown' && window.matchMedia('(pointer: fine)').matches) return;
       startX = e.touches ? e.touches[0].clientX : e.clientX;
       currentX = 0;
       swiping = true;
@@ -2600,7 +2750,6 @@ function renderGoals() {
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       currentX = x - startX;
       item.style.transform = `translateX(${currentX}px)`;
-      // tint bg red (left) or gold (right)
       if (currentX < 0) {
         bg.style.background = '#c0392b';
         bg.textContent = 'Delete';
@@ -2626,9 +2775,7 @@ function renderGoals() {
         item.style.transition = 'transform 0.2s ease';
         item.style.transform = `translateX(100%)`;
         launchConfetti();
-        setTimeout(() => {
-          toggleGoal(g.id);
-        }, 2800);
+        setTimeout(() => { toggleGoal(g.id); }, 2800);
       } else {
         item.style.transition = 'transform 0.2s ease';
         item.style.transform = 'translateX(0)';
@@ -2638,10 +2785,6 @@ function renderGoals() {
     item.addEventListener('touchstart', onStart, { passive: true });
     item.addEventListener('touchmove', onMove, { passive: true });
     item.addEventListener('touchend', onEnd);
-    item.addEventListener('mousedown', onStart);
-    item.addEventListener('mousemove', onMove);
-    item.addEventListener('mouseup', onEnd);
-    item.addEventListener('mouseleave', onEnd);
   });
 }
 
@@ -2671,6 +2814,7 @@ window.openBlockForm = openBlockForm;
 window.closeBlockForm = closeBlockForm;
 window.saveBlockFromSheet = saveBlockFromSheet;
 window.deleteBlockFromSheet = deleteBlockFromSheet;
+window.deleteBlockFromSheet_byIndex = deleteBlockFromSheet_byIndex;
 window.openGoalForm = openGoalForm;
 window.closeGoalForm = closeGoalForm;
 window.handleLogin = handleLogin;
