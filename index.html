@@ -652,7 +652,59 @@
 
   .goal-delete { display: none; }
 
-  .loading-screen {
+  /* ---- Add Goal Button & Sheet ---- */
+  .add-goal-fab {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .add-goal-fab:hover { border-color: var(--accent); color: var(--accent); }
+
+  .goal-sheet-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 800;
+  }
+  .goal-sheet-overlay.open { display: block; }
+
+  .goal-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 430px;
+    background: var(--bg);
+    border-radius: 12px 12px 0 0;
+    padding: 16px 24px 48px;
+    z-index: 900;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .goal-sheet.open { transform: translateX(-50%) translateY(0); }
+
+  .goal-sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  /* ---- Loading Screen ---- */
     display: flex;
     position: fixed;
     inset: 0;
@@ -906,17 +958,19 @@
     <!-- Goals View -->
     <div class="view" id="view-goals">
       <div class="stats-header">Goals</div>
-
-      <!-- Add Goal Form -->
-      <div class="goal-form">
-        <div class="section-label" style="margin-bottom:8px;">New Goal</div>
-        <input type="date" id="goal-date" class="goal-date-input" style="margin-bottom:8px;">
-        <textarea class="note-area" id="goal-input" placeholder="What do you want to achieve? (e.g. Learn the Chopin Ballade No.1, perfect the Coda section...)" style="min-height:90px;"></textarea>
-        <button class="save-btn" onclick="addGoal()" style="margin-top:8px;">Add Goal</button>
-      </div>
-
-      <div class="section-label" style="margin-top:24px;margin-bottom:10px;">Active Goals</div>
       <div id="goals-list"></div>
+      <button class="add-goal-fab" onclick="openGoalForm()">+ Add a Goal</button>
+    </div>
+
+    <!-- Goal Form Sheet -->
+    <div class="goal-sheet-overlay" id="goal-sheet-overlay" onclick="closeGoalForm()"></div>
+    <div class="goal-sheet" id="goal-sheet">
+      <div class="goal-sheet-handle"></div>
+      <div class="section-label" style="margin-bottom:8px;">Target Date</div>
+      <input type="date" id="goal-date" class="goal-date-input" style="margin-bottom:16px;">
+      <div class="section-label" style="margin-bottom:8px;">Goal</div>
+      <textarea class="note-area" id="goal-input" placeholder="e.g. Learn the Chopin Ballade No.1, perfect the Coda section..." style="min-height:100px;"></textarea>
+      <button class="save-btn" onclick="addGoal()" style="margin-top:12px;">Add Goal</button>
     </div>
 
   </div>
@@ -1490,8 +1544,13 @@ function renderAll() {
   const list = document.getElementById('all-entries-list');
   list.innerHTML = '';
 
+  const hasContent = k => {
+    const e = entries[k];
+    return e.blocks?.some(b => b.piece || b.note) || e.note || e.pieces?.length || e.recordings?.length;
+  };
+
   const keys = Object.keys(entries)
-    .filter(k => entries[k].note || entries[k].pieces?.length || entries[k].recordings?.length)
+    .filter(hasContent)
     .sort((a, b) => b.localeCompare(a));
 
   if (keys.length === 0) {
@@ -1504,11 +1563,21 @@ function renderAll() {
     const d = new Date(key + 'T00:00:00');
     const el = document.createElement('div');
     el.className = 'recent-entry';
+
+    // Build piece list from blocks (new) or legacy pieces field
+    const blocks = entry.blocks?.filter(b => b.piece || b.note) || [];
+    const pieces = blocks.length
+      ? blocks.map(b => b.piece).filter(Boolean)
+      : (entry.pieces || []);
+    const previewNote = blocks.length
+      ? (blocks[0]?.note || '')
+      : (entry.note || '');
+
     el.innerHTML = `
       <div class="recent-date">${d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      ${entry.pieces?.length
-        ? entry.pieces.map((p, i) => `<div class="recent-piece-line"><span class="recent-piece-name">${p}</span>${i === entry.pieces.length - 1 && entry.note ? `<span class="recent-piece-note"> — ${entry.note}</span>` : ''}</div>`).join('')
-        : entry.note ? `<div class="recent-piece-line"><span class="recent-piece-note">${entry.note}</span></div>`
+      ${pieces.length
+        ? pieces.map((p, i) => `<div class="recent-piece-line"><span class="recent-piece-name">${p}</span>${i === pieces.length - 1 && previewNote ? `<span class="recent-piece-note"> — ${previewNote}</span>` : ''}</div>`).join('')
+        : previewNote ? `<div class="recent-piece-line"><span class="recent-piece-note">${previewNote}</span></div>`
         : entry.recordings?.length ? `<div class="recent-piece-line"><span class="recent-piece-note">🎵 ${entry.recordings.length} recording(s)</span></div>` : ''
       }
     `;
@@ -1531,6 +1600,17 @@ function saveGoals() {
     .catch(e => console.error('Save goals failed', e));
 }
 
+function openGoalForm() {
+  document.getElementById('goal-sheet-overlay').classList.add('open');
+  document.getElementById('goal-sheet').classList.add('open');
+  setTimeout(() => document.getElementById('goal-input').focus(), 350);
+}
+
+function closeGoalForm() {
+  document.getElementById('goal-sheet-overlay').classList.remove('open');
+  document.getElementById('goal-sheet').classList.remove('open');
+}
+
 function addGoal() {
   const text = document.getElementById('goal-input').value.trim();
   const date = document.getElementById('goal-date').value;
@@ -1539,6 +1619,7 @@ function addGoal() {
   saveGoals();
   document.getElementById('goal-input').value = '';
   document.getElementById('goal-date').value = '';
+  closeGoalForm();
   renderCalendar();
   renderGoals();
 }
@@ -1705,6 +1786,8 @@ document.getElementById('login-username').addEventListener('keydown', e => {
 });
 
 // Expose functions to global scope (required for inline onclick handlers with type="module")
+window.openGoalForm = openGoalForm;
+window.closeGoalForm = closeGoalForm;
 window.handleLogin = handleLogin;
 window.logout = logout;
 window.switchView = switchView;
