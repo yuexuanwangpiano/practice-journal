@@ -1666,6 +1666,12 @@ let entries = {};     // { 'YYYY-MM-DD': { note: '', recordings: [] } }
 // ---- Auth ----
 let currentUser = null;
 
+// Hash PIN with SHA-256 before storing — never store plain text PINs
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 async function handleLogin() {
   const username = document.getElementById('login-username').value.trim().toLowerCase();
   const pin = document.getElementById('login-pin').value.trim();
@@ -1683,16 +1689,25 @@ async function handleLogin() {
     const userRef = doc(db, 'users', username);
     const snap = await getDoc(userRef);
 
+    const pinHash = await hashPin(pin);
+
     if (snap.exists()) {
-      // Existing user — verify PIN
-      if (snap.data().pin !== pin) {
+      // Existing user — verify PIN hash
+      const stored = snap.data().pin;
+      // Support both legacy plain-text PINs (4 digits) and new hashed PINs
+      const match = stored.length === 4 ? stored === pin : stored === pinHash;
+      if (!match) {
         errEl.textContent = 'Wrong PIN. Try again.';
         btn.textContent = 'Enter'; btn.disabled = false;
         return;
       }
+      // Silently upgrade legacy plain-text PIN to hash on successful login
+      if (stored.length === 4) {
+        await setDoc(userRef, { pin: pinHash, createdAt: snap.data().createdAt });
+      }
     } else {
-      // New user — create account
-      await setDoc(userRef, { pin, createdAt: Date.now() });
+      // New user — store hashed PIN only
+      await setDoc(userRef, { pin: pinHash, createdAt: Date.now() });
     }
 
     currentUser = username;
