@@ -671,6 +671,12 @@
   .empty-icon { font-size: 2rem; margin-bottom: 10px; }
 
   /* ---- Goals ---- */
+  /* Block form date picker — mobile only */
+  .block-date-row { display: none; }
+  @media (pointer: coarse) {
+    .block-date-row { display: block; }
+  }
+
   .goal-color-picker {
     display: flex;
     gap: 10px;
@@ -1534,6 +1540,10 @@
     <div class="goal-sheet-overlay" id="block-sheet-overlay" onclick="closeBlockForm()"></div>
     <div class="goal-sheet" id="block-sheet">
       <div class="goal-sheet-handle"></div>
+      <div class="block-date-row" id="block-date-row">
+        <div class="section-label" style="margin-bottom:6px;">Date</div>
+        <input type="date" id="block-sheet-date" class="goal-date-input" style="margin-bottom:16px;">
+      </div>
       <div class="section-label" style="margin-bottom:6px;">Piece</div>
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
       <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
@@ -2661,6 +2671,8 @@ function openBlockForm(index = null) {
   const data = index !== null ? (entry.blocks?.[index] || {}) : {};
   document.getElementById('block-sheet-piece').value = data.piece || '';
   document.getElementById('block-sheet-note').value = data.note || '';
+  // Pre-fill date field with selectedDate (mobile only, hidden on desktop)
+  document.getElementById('block-sheet-date').value = dateKey(selectedDate);
 
   // Show/hide delete button
   const delBtn = document.getElementById('block-sheet-delete');
@@ -2682,7 +2694,17 @@ function saveBlockFromSheet() {
   const piece = document.getElementById('block-sheet-piece').value.trim();
   const note = document.getElementById('block-sheet-note').value.trim();
   if (!piece && !note) return;
-  const entry = getEntry(selectedDate);
+
+  // On mobile, respect the date the user picked; otherwise use selectedDate
+  const dateInput = document.getElementById('block-sheet-date');
+  const isMobileForm = window.matchMedia('(pointer: coarse)').matches && dateInput.value;
+  let saveDate = selectedDate;
+  if (isMobileForm && dateInput.value) {
+    const [y, m, d] = dateInput.value.split('-').map(Number);
+    saveDate = new Date(y, m - 1, d);
+  }
+
+  const entry = getEntry(saveDate);
   if (!entry.blocks) entry.blocks = [];
   const isNew = editingBlockIndex === null;
   if (!isNew) {
@@ -2690,10 +2712,16 @@ function saveBlockFromSheet() {
   } else {
     entry.blocks.push({ piece, note, saved: true });
   }
-  setEntry(selectedDate, entry);
+  setEntry(saveDate, entry);
+
+  // If saved to a different date than currently selected, jump to it
+  if (dateKey(saveDate) !== dateKey(selectedDate)) {
+    selectedDate = saveDate;
+  }
+
   closeBlockForm();
   renderCalendar();
-  renderBlocks(entry.blocks);
+  loadJournalForDate();
   if (isNew) launchFirework();
 }
 
