@@ -756,6 +756,25 @@
 
   .goal-delete { display: none; }
 
+  /* ---- Fireworks ---- */
+  .firework-wrap {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+  }
+  .firework-particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: fireworkFly linear forwards;
+  }
+  @keyframes fireworkFly {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
   /* ---- Confetti ---- */
   .confetti-wrap {
     position: fixed;
@@ -2628,7 +2647,8 @@ function saveBlockFromSheet() {
   if (!piece && !note) return;
   const entry = getEntry(selectedDate);
   if (!entry.blocks) entry.blocks = [];
-  if (editingBlockIndex !== null) {
+  const isNew = editingBlockIndex === null;
+  if (!isNew) {
     entry.blocks[editingBlockIndex] = { piece, note, saved: true };
   } else {
     entry.blocks.push({ piece, note, saved: true });
@@ -2637,6 +2657,7 @@ function saveBlockFromSheet() {
   closeBlockForm();
   renderCalendar();
   renderBlocks(entry.blocks);
+  if (isNew) launchFirework();
 }
 
 function deleteBlockFromSheet() {
@@ -2695,6 +2716,49 @@ function deleteGoal(id) {
   renderCalendar();
   if (typeof calViewMonth !== 'undefined') renderCalView();
   renderGoals();
+}
+
+function launchFirework() {
+  const wrap = document.createElement('div');
+  wrap.className = 'firework-wrap';
+  document.body.appendChild(wrap);
+
+  const colors = ['#b89a6a','#f1c40f','#e74c3c','#3498db','#2ecc71','#9b59b6','#fff','#fd79a8'];
+  const bursts = 3;
+
+  for (let b = 0; b < bursts; b++) {
+    setTimeout(() => {
+      // Each burst originates from a random-ish center point on screen
+      const cx = window.innerWidth  * (0.3 + Math.random() * 0.4);
+      const cy = window.innerHeight * (0.2 + Math.random() * 0.45);
+      const count = 28 + Math.floor(Math.random() * 16);
+
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'firework-particle';
+
+        const angle = (i / count) * 2 * Math.PI;
+        const dist  = 60 + Math.random() * 90;
+        const dx    = Math.cos(angle) * dist;
+        const dy    = Math.sin(angle) * dist;
+        const size  = 4 + Math.random() * 5;
+        const dur   = 0.55 + Math.random() * 0.4;
+
+        p.style.cssText = `
+          left: ${cx}px; top: ${cy}px;
+          width: ${size}px; height: ${size}px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          --dx: ${dx}px; --dy: ${dy}px;
+          animation-duration: ${dur}s;
+          animation-delay: ${b * 0.18}s;
+          box-shadow: 0 0 ${size}px ${colors[Math.floor(Math.random() * colors.length)]};
+        `;
+        wrap.appendChild(p);
+      }
+    }, b * 180);
+  }
+
+  setTimeout(() => wrap.remove(), 1600);
 }
 
 function launchConfetti() {
@@ -2927,6 +2991,7 @@ window.addRecordingLink = addRecordingLink;
 window.addGoal = addGoal;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
+window.launchFirework = launchFirework;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
 window.closeDayModal = closeDayModal;
