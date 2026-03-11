@@ -950,6 +950,7 @@
   }
 
   /* ---- Year Animation ---- */
+  /* ---- Login Animation: Page-Turn Calendar ---- */
   .year-anim {
     display: none;
     position: fixed;
@@ -962,89 +963,150 @@
   }
   .year-anim.active { display: flex; }
 
-  .year-anim-inner {
-    width: 100%;
-    max-width: 430px;
-    padding: 24px 16px;
-    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+  .cal-anim-wrap {
+    width: 260px;
+    height: 310px;
+    perspective: 900px;
+    position: relative;
   }
 
-  .year-anim-title {
+  /* The stack of pages sitting underneath */
+  .cal-page-stack {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px 4px 6px 6px;
+  }
+  .cal-page-stack::before,
+  .cal-page-stack::after {
+    content: '';
+    position: absolute;
+    left: 2px; right: 2px; bottom: -3px;
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px 4px 6px 6px;
+  }
+  .cal-page-stack::after {
+    left: 4px; right: 4px; bottom: -6px;
+    background: var(--bg);
+  }
+
+  /* Each calendar page */
+  .cal-page {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px 4px 6px 6px;
+    padding: 16px 16px 18px;
+    transform-origin: top center;
+    backface-visibility: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+
+  /* The page that is turning away (flipping up and over) */
+  .cal-page.turning {
+    animation: pageTurn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    transform-style: preserve-3d;
+    z-index: 10;
+  }
+
+  /* The final page (current month) that fades gently in */
+  .cal-page.final {
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .cal-page.final.show { opacity: 1; }
+
+  @keyframes pageTurn {
+    0%   { transform: rotateX(0deg);    box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    30%  { transform: rotateX(-70deg);  box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
+    55%  { transform: rotateX(-90deg);  box-shadow: 0 8px 24px rgba(0,0,0,0.10); opacity: 1; }
+    100% { transform: rotateX(-168deg); box-shadow: none; opacity: 0; }
+  }
+
+  /* Whole wrap fades out at the end */
+  .cal-anim-wrap.fade-out {
+    transition: opacity 0.45s ease;
+    opacity: 0;
+  }
+
+  /* Spiral binding holes at top */
+  .cal-binding {
+    display: flex;
+    justify-content: space-around;
+    padding: 0 20px;
+    margin-bottom: 12px;
+  }
+  .cal-hole {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+
+  /* Month header on each page */
+  .cal-page-month {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     font-weight: 300;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.1em;
     text-align: center;
-    color: var(--muted);
-    margin-bottom: 20px;
-    opacity: 0;
-    animation: fadeInUp 0.5s ease 0.1s forwards;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 2px;
   }
-
-  .year-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-
-  .year-month {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: fadeInUp 0.4s ease forwards;
-  }
-
-  .year-month-name {
+  .cal-page-year {
     font-family: 'Jost', sans-serif;
-    font-size: 0.55rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 4px;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
     text-align: center;
+    color: var(--muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .cal-page-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 10px;
   }
 
-  .year-mini-cal {
+  /* Calendar grid on each page */
+  .cal-page-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
+    gap: 2px;
   }
-
-  .year-mini-day {
+  .cal-page-cell {
     font-family: 'Jost', sans-serif;
-    font-size: 0.48rem;
+    font-size: 0.72rem;
     font-weight: 300;
-    color: var(--text);
     text-align: center;
-    padding: 1.5px 0;
-    line-height: 1;
+    padding: 4px 0;
+    line-height: 1.2;
+    color: var(--text);
     border-radius: 50%;
   }
-
-  .year-mini-day.label {
+  .cal-page-cell.label {
+    font-size: 0.58rem;
     color: var(--muted);
-    font-size: 0.42rem;
     font-weight: 400;
+    letter-spacing: 0.05em;
+    padding-bottom: 6px;
   }
-
-  .year-mini-day.today-dot {
+  .cal-page-cell.empty { color: transparent; }
+  .cal-page-cell.today-cell {
     background: var(--text);
     color: var(--bg);
-    border-radius: 50%;
+    font-weight: 500;
   }
-
-  .year-mini-day.current-month-hi {
-    background: rgba(184,154,106,0.25);
-    border-radius: 2px;
-  }
+  .cal-page-cell.weekend { color: var(--muted); }
 
   @keyframes fadeInUp {
     to { opacity: 1; transform: translateY(0); }
-  }
-
-  .year-anim-inner.zoom-out {
-    transform: scale(3.5) translateY(-18%);
-    opacity: 0;
   }
 
   /* ---- Loading Screen ---- */
@@ -1573,75 +1635,100 @@ function logout() {
 function playYearAnimation(onDone) {
   const overlay = document.getElementById('year-anim');
   const inner = document.getElementById('year-anim-inner');
-  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const DAYS_SHORT = ['S','M','T','W','T','F','S'];
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const DAYS = ['S','M','T','W','T','F','S'];
   const now = new Date();
   const thisYear = now.getFullYear();
   const thisMonth = now.getMonth();
   const todayDate = now.getDate();
 
-  inner.innerHTML = `<div class="year-anim-title">${thisYear}</div><div class="year-grid" id="year-grid"></div>`;
-  const grid = inner.querySelector('#year-grid');
-
-  for (let m = 0; m < 12; m++) {
-    const monthEl = document.createElement('div');
-    monthEl.className = 'year-month';
-    // stagger each month
-    monthEl.style.animationDelay = (0.15 + m * 0.055) + 's';
-
-    const isCurrent = m === thisMonth;
-
-    let html = `<div class="year-month-name" style="${isCurrent ? 'color:var(--accent);font-weight:500;' : ''}">${MONTHS_SHORT[m]}</div>`;
-    html += `<div class="year-mini-cal">`;
-
-    // Day labels
-    DAYS_SHORT.forEach(d => { html += `<div class="year-mini-day label">${d}</div>`; });
-
+  // Build a calendar page HTML for a given month
+  function buildPage(m) {
     const firstDay = new Date(thisYear, m, 1).getDay();
     const daysInMonth = new Date(thisYear, m + 1, 0).getDate();
+    const isCurrent = (m === thisMonth);
 
-    // Empty cells
-    for (let i = 0; i < firstDay; i++) html += `<div class="year-mini-day"></div>`;
-
-    // Days
+    let grid = '<div class="cal-page-grid">';
+    DAYS.forEach(d => { grid += `<div class="cal-page-cell label">${d}</div>`; });
+    for (let i = 0; i < firstDay; i++) grid += `<div class="cal-page-cell empty"></div>`;
     for (let d = 1; d <= daysInMonth; d++) {
-      let cls = 'year-mini-day';
-      if (isCurrent && d === todayDate) cls += ' today-dot';
-      else if (isCurrent) cls += ' current-month-hi';
-      html += `<div class="${cls}">${d}</div>`;
+      let cls = 'cal-page-cell';
+      const dow = (firstDay + d - 1) % 7;
+      if (isCurrent && d === todayDate) cls += ' today-cell';
+      else if (dow === 0 || dow === 6) cls += ' weekend';
+      grid += `<div class="${cls}">${d}</div>`;
     }
+    grid += '</div>';
 
-    html += `</div>`;
-    monthEl.innerHTML = html;
-    grid.appendChild(monthEl);
+    return `
+      <div class="cal-binding">${Array(6).fill('<div class="cal-hole"></div>').join('')}</div>
+      <div class="cal-page-month">${MONTHS[m]}</div>
+      <div class="cal-page-year">${thisYear}</div>
+      <div class="cal-page-divider"></div>
+      ${grid}
+    `;
   }
 
+  // Show 2 pages before current month, then current
+  const pagesToShow = [];
+  for (let i = 2; i >= 1; i--) {
+    const m = (thisMonth - i + 12) % 12;
+    pagesToShow.push(m);
+  }
+  pagesToShow.push(thisMonth); // final page
+
+  inner.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'cal-anim-wrap';
+
+  // Stack shadow
+  const stack = document.createElement('div');
+  stack.className = 'cal-page-stack';
+  wrap.appendChild(stack);
+
+  // Build all pages, stacked on top of each other
+  const pageEls = [];
+  pagesToShow.forEach((m, idx) => {
+    const page = document.createElement('div');
+    page.className = 'cal-page';
+    if (idx === pagesToShow.length - 1) page.classList.add('final');
+    page.innerHTML = buildPage(m);
+    wrap.appendChild(page);
+    pageEls.push(page);
+  });
+
+  inner.appendChild(wrap);
   overlay.classList.add('active');
 
-  // After all months appear, zoom into current month
-  setTimeout(() => {
-    // Find current month element and zoom toward it
-    const monthEls = grid.querySelectorAll('.year-month');
-    const currentEl = monthEls[thisMonth];
-    const col = thisMonth % 3;
-    const row = Math.floor(thisMonth / 3);
-    // Translate toward current month cell
-    const txMap = [-1, 0, 1];
-    const tyMap = [-1.5, -0.5, 0.5, 1.5];
-    const tx = txMap[col] * 38;
-    const ty = tyMap[row] * 38;
-    inner.style.transition = 'transform 0.75s cubic-bezier(0.4,0,0.2,1), opacity 0.5s ease 0.35s';
-    inner.style.transform = `scale(3.8) translate(${-tx}px, ${-ty}px)`;
-    inner.style.opacity = '0';
-  }, 1800);
+  // Flip pages one by one, revealing the next underneath
+  // Pages 0 and 1 are "previous months" that flip away
+  // Page 2 is current month — fades in after last flip
+  const flipDelay = 600; // ms between flips
+  const flipDuration = 600;
 
-  // Hide overlay and show app
+  pageEls.slice(0, -1).forEach((page, i) => {
+    setTimeout(() => {
+      page.classList.add('turning');
+    }, 300 + i * flipDelay);
+  });
+
+  // Show final (current month) page as last page flips
+  const finalPage = pageEls[pageEls.length - 1];
+  setTimeout(() => {
+    finalPage.classList.add('show');
+  }, 300 + (pageEls.length - 1) * flipDelay);
+
+  // Fade entire wrap out, then call onDone
+  const totalDur = 300 + pageEls.length * flipDelay + 700;
+  setTimeout(() => {
+    wrap.classList.add('fade-out');
+  }, totalDur);
+
   setTimeout(() => {
     overlay.classList.remove('active');
-    inner.style.transform = '';
-    inner.style.opacity = '';
     onDone();
-  }, 2650);
+  }, totalDur + 500);
 }
 
 async function showApp() {
