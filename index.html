@@ -1862,6 +1862,7 @@ const db = getFirestore(firebaseApp);
 let currentDate = new Date();
 let selectedDate = new Date();
 let entries = {};     // { 'YYYY-MM-DD': { note: '', recordings: [] } }
+let _datePickerReturnToLog = false;
 
 // ---- Auth ----
 let currentUser = null;
@@ -2657,8 +2658,23 @@ function renderCalView() {
     const back = document.createElement('button');
     back.className = 'ycal-back-btn';
     back.innerHTML = '‹ ' + calViewYear;
-    back.onclick = () => { calViewMonth = null; renderCalView(); };
+    back.onclick = () => {
+      if (_datePickerReturnToLog) {
+        _datePickerReturnToLog = false;
+        switchView('journal');
+      } else {
+        calViewMonth = null; renderCalView();
+      }
+    };
     body.appendChild(back);
+
+    // Date-picker hint banner
+    if (_datePickerReturnToLog) {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'text-align:center;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;';
+      hint.textContent = 'Tap a date to go to Log';
+      body.appendChild(hint);
+    }
 
     // Calendar grid — identical CSS classes to Log/Goals cal
     const grid = document.createElement('div');
@@ -2696,15 +2712,39 @@ function renderCalView() {
       const hasMiniGoal = !!activeMiniCV;
       const hasMiniGoalDone = !hasMiniGoal && miniGoals.some(m => m.date === key && m.done);
 
+      const isSelected = _datePickerReturnToLog && key === dateKey(selectedDate);
       const el = document.createElement('div');
       el.className = 'cal-day'
         + (isToday ? ' today' : '')
+        + (isSelected ? ' selected' : '')
         + (hasEntry ? ' has-entry' : '')
         + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '')
         + (hasMiniGoal ? ' has-mini-goal' : hasMiniGoalDone ? ' has-mini-goal-done' : '');
       if (hasGoal) el.style.setProperty('--star-color', activeGoalCV.color || '#b89a6a');
       el.innerHTML = `<span class="cal-day-num">${d}</span>`;
-      if (hasEntry || hasGoal) el.onclick = () => openDayModal(key);
+      if (hasEntry) {
+        const ent = entries[key];
+        const dotCount = Math.min((ent.blocks || []).filter(b => b.note || b.piece).length + (ent.recordings || []).length, 4);
+        if (dotCount > 0) {
+          const dotsWrap = document.createElement('div');
+          dotsWrap.className = 'entry-dots';
+          for (let i = 0; i < dotCount; i++) {
+            const dot = document.createElement('span'); dot.className = 'dot';
+            dotsWrap.appendChild(dot);
+          }
+          el.appendChild(dotsWrap);
+        }
+      }
+      el.onclick = () => {
+        if (_datePickerReturnToLog) {
+          _datePickerReturnToLog = false;
+          selectedDate = new Date(key + 'T00:00:00');
+          currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+          switchView('journal');
+        } else if (hasEntry || hasGoal) {
+          openDayModal(key);
+        }
+      };
       grid.appendChild(el);
     }
 
@@ -3167,9 +3207,13 @@ function deleteGoal(id) {
 
 function openDatePicker() {
   if (window.matchMedia('(pointer: fine)').matches) return;
-  const input = document.getElementById('dp-date-input');
-  input.value = dateKey(selectedDate);
-  try { input.showPicker(); } catch(e) { input.click(); }
+  // On mobile: show the inline calendar to pick a date, then come back
+  _datePickerReturnToLog = true;
+  switchView('cal');
+  // Switch cal to the month of the selected date
+  calViewYear  = selectedDate.getFullYear();
+  calViewMonth = selectedDate.getMonth();
+  renderCalView();
 }
 
 function closeDatePicker() {} // no-op, picker closes itself
