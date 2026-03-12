@@ -644,6 +644,7 @@
     border-top: 1px solid var(--border);
     display: flex;
     padding: 10px 0 24px;
+    z-index: 500;
   }
 
   .nav-item {
@@ -2488,6 +2489,7 @@ function deleteNoWayDay(key) {
 }
 
 function renderNoWayDayList() {
+  cleanupDotsMenus('nwd');
   const list = document.getElementById('nwd-list');
   if (!list) return;
   list.innerHTML = '';
@@ -2518,6 +2520,7 @@ function renderNoWayDayList() {
 
     const menu = document.createElement('div');
     menu.className = 'dots-menu';
+    menu.dataset.scope = 'nwd';
 
     const delBtn = document.createElement('button');
     delBtn.className = 'dots-menu-item danger';
@@ -2593,6 +2596,7 @@ function deleteBlock(index) {
 }
 
 function renderBlocks(blocks) {
+  cleanupDotsMenus('blocks');
   const list = document.getElementById('blocks-list');
   list.innerHTML = '';
   blocks.forEach((b, i) => createBlockEl(b, i));
@@ -2623,6 +2627,7 @@ function createBlockEl(data, index) {
 
   const menu = document.createElement('div');
   menu.className = 'dots-menu';
+  menu.dataset.scope = 'blocks';
 
   const editBtn = document.createElement('button');
   editBtn.className = 'dots-menu-item';
@@ -2747,6 +2752,7 @@ function closeVideoModal() {
 }
 
 function renderRecordings(recordings) {
+  cleanupDotsMenus('recordings');
   const list = document.getElementById('recordings-list');
   list.innerHTML = '';
 
@@ -2797,6 +2803,7 @@ function renderRecordings(recordings) {
 
     const menu = document.createElement('div');
     menu.className = 'dots-menu';
+    menu.dataset.scope = 'recordings';
 
     const delBtn = document.createElement('button');
     delBtn.className = 'dots-menu-item danger';
@@ -3545,6 +3552,7 @@ function deleteMiniGoal(id) {
 }
 
 function renderMiniGoals() {
+  cleanupDotsMenus('minigoals');
   const list = document.getElementById('mini-goals-list');
   if (!list) return;
   list.innerHTML = '';
@@ -3600,6 +3608,7 @@ function renderMiniGoals() {
 
     const menu = document.createElement('div');
     menu.className = 'dots-menu';
+    menu.dataset.scope = 'minigoals';
 
     const editMiniBtn = document.createElement('button');
     editMiniBtn.className = 'dots-menu-item';
@@ -3807,12 +3816,19 @@ function closeAllDotsMenus(except) {
     if (m !== except) m.classList.remove('open');
   });
 }
+
+function cleanupDotsMenus(scope) {
+  // Remove all dots-menu elements that were appended to body (identified by data-scope)
+  document.querySelectorAll(`.dots-menu[data-scope="${scope}"]`).forEach(m => m.remove());
+}
+
 // Global click closes all menus (fires after stopPropagation on btn is handled)
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.item-dots-btn')) closeAllDotsMenus(null);
 });
 
 function renderGoals() {
+  cleanupDotsMenus('goals');
   const list = document.getElementById('goals-list');
   list.innerHTML = '';
 
@@ -3876,6 +3892,7 @@ function renderGoals() {
 
     const menu = document.createElement('div');
     menu.className = 'dots-menu';
+    menu.dataset.scope = 'goals';
 
     const editBtn = document.createElement('button');
     editBtn.className = 'dots-menu-item';
