@@ -2664,14 +2664,15 @@ function renderCalView() {
     body.className = 'year-cal-body month-mode';
     body.innerHTML = '';
 
-    // New inline row: back button (left) + month name (right), sits above SMTWTFS
+    // Header row: [‹ 2026] [‹] [   March   ] [›]
     const monthRow = document.createElement('div');
     monthRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:0 2px;margin-bottom:10px;';
 
+    // Back-to-year button (far left)
     const backBtn = document.createElement('button');
     backBtn.id = 'ycal-header-back';
     backBtn.className = 'ycal-back-btn';
-    backBtn.style.cssText = 'padding:0;margin:0;';
+    backBtn.style.cssText = 'padding:0;margin:0;min-width:48px;text-align:left;';
     backBtn.innerHTML = '‹ ' + calViewYear;
     backBtn.onclick = () => {
       header.style.display = '';
@@ -2683,12 +2684,37 @@ function renderCalView() {
       }
     };
 
+    // Prev-month arrow
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'year-cal-arrow';
+    prevBtn.style.cssText = 'font-size:1.3rem;padding:0 8px;';
+    prevBtn.textContent = '‹';
+    prevBtn.onclick = () => {
+      if (calViewMonth === 0) { calViewMonth = 11; calViewYear--; }
+      else { calViewMonth--; }
+      renderCalView();
+    };
+
+    // Month name (center)
     const monthLabel = document.createElement('div');
-    monthLabel.style.cssText = 'font-family:"Cormorant Garamond",serif;font-size:1.1rem;font-weight:400;letter-spacing:0.06em;color:var(--text);';
-    monthLabel.textContent = `${MONTHS_FULL[calViewMonth]} ${calViewYear}`;
+    monthLabel.style.cssText = 'font-family:"Cormorant Garamond",serif;font-size:1.55rem;font-weight:400;letter-spacing:0.06em;color:var(--text);flex:1;text-align:center;';
+    monthLabel.textContent = MONTHS_FULL[calViewMonth];
+
+    // Next-month arrow
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'year-cal-arrow';
+    nextBtn.style.cssText = 'font-size:1.3rem;padding:0 8px;';
+    nextBtn.textContent = '›';
+    nextBtn.onclick = () => {
+      if (calViewMonth === 11) { calViewMonth = 0; calViewYear++; }
+      else { calViewMonth++; }
+      renderCalView();
+    };
 
     monthRow.appendChild(backBtn);
+    monthRow.appendChild(prevBtn);
     monthRow.appendChild(monthLabel);
+    monthRow.appendChild(nextBtn);
     body.appendChild(monthRow);
 
     // Date-picker hint banner
