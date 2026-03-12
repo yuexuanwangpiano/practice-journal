@@ -50,7 +50,7 @@
     --muted: #999;
     --accent: #2c2c2c;
     --soft: #f3f0ec;
-    --gold: #b89a6a;
+    --gold: #F4722B;
   }
 
   html, body {
@@ -200,7 +200,7 @@
 
   .cal-day.has-goal::before {
     content: '★';
-    color: var(--star-color, #b89a6a);
+    color: var(--star-color, #F4722B);
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1056,8 +1056,8 @@
     border-radius: 50%;
     margin: 0 auto;
   }
-  .ycal-mini-cell.has-goal { color: #b89a6a; font-weight: 500; }
-  .ycal-mini-cell.has-goal::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #b89a6a; }
+  .ycal-mini-cell.has-goal { color: #F4722B; font-weight: 500; }
+  .ycal-mini-cell.has-goal::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #F4722B; }
   .ycal-mini-cell.has-goal { position: relative; }
   .ycal-mini-cell.has-goal-done::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #ccc; }
   .ycal-mini-cell.has-goal-done { position: relative; }
@@ -1144,7 +1144,7 @@
     position: absolute;
     top: 1px; right: 3px;
     font-size: 0.6rem;
-    color: #b89a6a;
+    color: #F4722B;
     line-height: 1;
   }
   .ycal-full-cell.has-goal { cursor: pointer; }
@@ -1829,11 +1829,11 @@
       <div id="goal-date-warning" style="color:#c0392b;font-size:0.78rem;margin-bottom:10px;min-height:1em;"></div>
       <div class="section-label" style="margin-bottom:8px;">Star Color</div>
       <div class="goal-color-picker" id="goal-color-picker">
-        <button class="goal-color-btn selected" data-color="#b89a6a" style="background:#b89a6a;" title="Gold" onclick="selectGoalColor(this)"></button>
-        <button class="goal-color-btn" data-color="#e74c3c" style="background:#e74c3c;" title="Red" onclick="selectGoalColor(this)"></button>
-        <button class="goal-color-btn" data-color="#3498db" style="background:#3498db;" title="Blue" onclick="selectGoalColor(this)"></button>
-        <button class="goal-color-btn" data-color="#2ecc71" style="background:#2ecc71;" title="Green" onclick="selectGoalColor(this)"></button>
-        <button class="goal-color-btn" data-color="#9b59b6" style="background:#9b59b6;" title="Purple" onclick="selectGoalColor(this)"></button>
+        <button class="goal-color-btn selected" data-color="#F4722B" style="background:#F4722B;" title="Warm Orange" onclick="selectGoalColor(this)"></button>
+        <button class="goal-color-btn" data-color="#E91E8C" style="background:#E91E8C;" title="Hot Pink" onclick="selectGoalColor(this)"></button>
+        <button class="goal-color-btn" data-color="#F5C518" style="background:#F5C518;" title="Golden Yellow" onclick="selectGoalColor(this)"></button>
+        <button class="goal-color-btn" data-color="#9B7FD4" style="background:#9B7FD4;" title="Soft Purple" onclick="selectGoalColor(this)"></button>
+        <button class="goal-color-btn" data-color="#E8472A" style="background:#E8472A;" title="Coral Red" onclick="selectGoalColor(this)"></button>
       </div>
       <div class="section-label" style="margin-bottom:8px;margin-top:16px;">Goal</div>
       <textarea class="note-area" id="goal-input" placeholder="e.g. Learn the Chopin Ballade No.1, perfect the Coda section..." style="min-height:60px;"></textarea>
@@ -2393,7 +2393,7 @@ function renderCalendar() {
     const doneGoal   = goals.find(g => g.date === key && g.done);
     if (activeGoal) {
       el.classList.add('has-goal');
-      el.style.setProperty('--star-color', activeGoal.color || '#b89a6a');
+      el.style.setProperty('--star-color', activeGoal.color || '#F4722B');
     } else if (doneGoal) {
       el.classList.add('has-goal-done');
     }
@@ -3100,7 +3100,7 @@ function renderCalView() {
         + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '')
         + (hasMiniGoal ? ' has-mini-goal' : hasMiniGoalDone ? ' has-mini-goal-done' : '')
         + (noWayDays.includes(key) ? ' no-way-day' : '');
-      if (hasGoal) el.style.setProperty('--star-color', activeGoalCV.color || '#b89a6a');
+      if (hasGoal) el.style.setProperty('--star-color', activeGoalCV.color || '#F4722B');
       el.innerHTML = `<span class="cal-day-num">${d}</span>`;
       if (hasEntry) {
         const ent = entries[key];
@@ -3405,7 +3405,7 @@ function openGoalForm(editId) {
     if (g) {
       document.getElementById('goal-input').value = g.text || '';
       document.getElementById('goal-date').value = g.date || '';
-      document.querySelectorAll('.goal-color-btn').forEach(b => b.classList.toggle('selected', b.dataset.color === (g.color || '#b89a6a')));
+      document.querySelectorAll('.goal-color-btn').forEach(b => b.classList.toggle('selected', b.dataset.color === (g.color || '#F4722B')));
     }
     saveBtn.textContent = 'Save Changes';
   } else {
@@ -3449,7 +3449,7 @@ function addGoal() {
   const date = document.getElementById('goal-date').value;
   if (!text) return;
   const colorBtn = document.querySelector('.goal-color-btn.selected');
-  const color = colorBtn ? colorBtn.dataset.color : '#b89a6a';
+  const color = colorBtn ? colorBtn.dataset.color : '#F4722B';
 
   if (_editingGoalId) {
     const g = goals.find(g => g.id === _editingGoalId);
@@ -3714,7 +3714,7 @@ function launchFirework() {
   wrap.className = 'firework-wrap';
   document.body.appendChild(wrap);
 
-  const colors = ['#b89a6a','#f1c40f','#e74c3c','#3498db','#2ecc71','#9b59b6','#fff','#fd79a8'];
+  const colors = ['#F4722B','#f1c40f','#e74c3c','#3498db','#2ecc71','#9b59b6','#fff','#fd79a8'];
   const bursts = 3;
 
   for (let b = 0; b < bursts; b++) {
@@ -3759,7 +3759,7 @@ function launchConfetti() {
   canvas.height = window.innerHeight;
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  const colors = ['#b89a6a','#e74c3c','#f1c40f','#27ae60','#2980b9','#8e44ad','#e67e22'];
+  const colors = ['#F4722B','#e74c3c','#f1c40f','#27ae60','#2980b9','#8e44ad','#e67e22'];
   const pieces = Array.from({ length: 65 }, () => ({
     x: Math.random() * canvas.width,
     y: -10 - Math.random() * 40,
