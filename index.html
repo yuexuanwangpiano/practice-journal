@@ -2953,32 +2953,40 @@ function renderMiniGoals() {
 
   const sorted = [...miniGoals].sort((a,b) => a.date.localeCompare(b.date));
   sorted.forEach(m => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);position:relative;';
+    const today = new Date().toISOString().split('T')[0];
+    const isOverdue = m.date && m.date < today && !m.done;
 
-    const strokeColor = m.done ? '%23aaaaaa' : '%23000000';
-    const circle = document.createElement('button');
-    circle.title = m.done ? 'Mark undone' : 'Mark done';
-    circle.style.cssText = 'flex-shrink:0;width:32px;height:32px;background:none;border:none;padding:0;cursor:pointer;';
-    circle.innerHTML = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M 54,8 C 70,6 88,12 93,28 C 98,44 95,65 85,76 C 74,88 55,94 38,91 C 20,88 7,76 5,60 C 3,44 10,24 24,15 C 34,9 44,9 54,10 C 60,11 64,13 62,14" fill="none" stroke="${strokeColor.replace('%23','#')}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    circle.addEventListener('click', () => toggleMiniGoal(m.id));
+    // Same wrapper structure as goal-item-wrap
+    const wrap = document.createElement('div');
+    wrap.className = 'goal-item-wrap';
+
+    const item = document.createElement('div');
+    item.className = 'goal-item' + (m.done ? ' done' : '');
+
+    // Same check button as goals
+    const circleBtn = document.createElement('button');
+    circleBtn.className = 'goal-check' + (m.done ? ' checked' : '');
+    circleBtn.textContent = m.done ? '✓' : '';
+    circleBtn.addEventListener('click', () => toggleMiniGoal(m.id));
 
     const body = document.createElement('div');
-    body.style.cssText = 'flex:1;min-width:0;';
+    body.className = 'goal-body';
 
     const txt = document.createElement('div');
-    txt.style.cssText = `font-size:0.88rem;color:var(--text);${m.done ? 'text-decoration:line-through;opacity:0.5;' : ''}`;
+    txt.className = 'goal-text' + (m.done ? ' done' : '');
     txt.textContent = m.text;
+    body.appendChild(txt);
 
     const d = new Date(m.date + 'T00:00:00');
     const due = document.createElement('div');
-    due.style.cssText = 'font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-top:2px;';
-    due.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    body.appendChild(txt);
+    due.className = 'goal-due' + (isOverdue ? ' overdue' : '');
+    due.textContent = (isOverdue ? 'Overdue · ' : 'By · ') + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     body.appendChild(due);
 
-    // Dots button (always visible, same as blocks)
+    item.appendChild(circleBtn);
+    item.appendChild(body);
+
+    // Dots menu — same as goals
     const dotsBtn = document.createElement('button');
     dotsBtn.className = 'item-dots-btn';
     dotsBtn.style.display = 'flex';
@@ -3011,10 +3019,9 @@ function renderMiniGoals() {
       }
     });
 
-    row.appendChild(circle);
-    row.appendChild(body);
-    row.appendChild(dotsBtn);
-    list.appendChild(row);
+    item.appendChild(dotsBtn);
+    wrap.appendChild(item);
+    list.appendChild(wrap);
   });
 }
 
