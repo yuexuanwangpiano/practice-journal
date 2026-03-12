@@ -1959,6 +1959,7 @@ async function showApp() {
   document.getElementById('header-username').textContent = currentUser;
   await loadData();
   await loadGoals();
+  renderMiniGoals();
 
   document.querySelector('.app').style.visibility = 'visible';
   const onMobile = !window.matchMedia('(pointer: fine)').matches;
@@ -2893,14 +2894,14 @@ function renderMiniGoals() {
 
   const header = document.createElement('div');
   header.className = 'section-label';
-  header.style.marginBottom = '8px';
+  header.style.cssText = 'margin-bottom:8px;margin-top:16px;';
   header.textContent = 'Mini Goals';
   list.appendChild(header);
 
   const sorted = [...miniGoals].sort((a,b) => a.date.localeCompare(b.date));
   sorted.forEach(m => {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);position:relative;';
 
     const circle = document.createElement('div');
     circle.style.cssText = 'flex-shrink:0;width:28px;height:28px;';
@@ -2915,27 +2916,55 @@ function renderMiniGoals() {
 
     const d = new Date(m.date + 'T00:00:00');
     const due = document.createElement('div');
-    due.style.cssText = 'font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:2px;';
+    due.style.cssText = 'font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-top:2px;';
     due.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     body.appendChild(txt);
     body.appendChild(due);
 
-    const del = document.createElement('button');
-    del.style.cssText = 'background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px;flex-shrink:0;';
-    del.textContent = '×';
-    del.onclick = () => deleteMiniGoal(m.id);
+    // Dots button (always visible, same as blocks)
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'item-dots-btn';
+    dotsBtn.style.display = 'flex';
+    dotsBtn.textContent = '⋯';
+    dotsBtn.title = 'Options';
+
+    const menu = document.createElement('div');
+    menu.className = 'dots-menu';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dots-menu-item danger';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.remove('open');
+      deleteMiniGoal(m.id);
+    });
+    menu.appendChild(delBtn);
+    document.body.appendChild(menu);
+
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      closeAllDotsMenus(null);
+      if (!isOpen) {
+        const r = dotsBtn.getBoundingClientRect();
+        menu.style.top = (r.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - r.right) + 'px';
+        menu.classList.add('open');
+      }
+    });
 
     row.appendChild(circle);
     row.appendChild(body);
-    row.appendChild(del);
+    row.appendChild(dotsBtn);
     list.appendChild(row);
   });
 }
 
 function toggleGoal(id) {
   const g = goals.find(g => g.id === id);
-  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); if (typeof calViewMonth !== 'undefined') renderCalView(); renderGoals(); }
+  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); if (typeof calViewMonth !== 'undefined') renderCalView(); renderGoals(); renderMiniGoals(); }
 }
 
 function deleteGoal(id) {
