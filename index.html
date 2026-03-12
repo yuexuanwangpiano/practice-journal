@@ -244,6 +244,24 @@
   /* Keep existing entry dot on top */
   .cal-day.has-mini-goal.has-entry::after { z-index: 0; }
 
+  /* Done mini goal — grey circle */
+  .cal-day.has-mini-goal-done {
+    position: relative;
+  }
+  .cal-day.has-mini-goal-done::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 54,8 C 70,6 88,12 93,28 C 98,44 95,65 85,76 C 74,88 55,94 38,91 C 20,88 7,76 5,60 C 3,44 10,24 24,15 C 34,9 44,9 54,10 C 60,11 64,13 62,14' fill='none' stroke='%23aaaaaa' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-size: 100% 100%;
+    z-index: 1;
+  }
+
   .cal-day.other-month { color: var(--border); cursor: default; }
 
   /* ---- Scrollable Content ---- */
@@ -811,6 +829,27 @@
     .selected-date { cursor: default !important; }
   }
 
+
+  /* ---- Mini Goal celebration: confetti cannon GIF ---- */
+  .mini-celebrate-wrap {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: celebrateFadeOut 0.4s ease-in 2.2s forwards;
+  }
+  .mini-celebrate-wrap img {
+    width: min(320px, 80vw);
+    height: auto;
+  }
+  @keyframes celebrateFadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
 
   /* ---- Fireworks ---- */
   .firework-wrap {
@@ -2079,9 +2118,10 @@ function renderCalendar() {
     } else if (doneGoal) {
       el.classList.add('has-goal-done');
     }
-    if (miniGoals.some(m => m.date === key)) {
-      el.classList.add('has-mini-goal');
-    }
+    const activeMini = miniGoals.find(m => m.date === key && !m.done);
+    const doneMini   = miniGoals.find(m => m.date === key && m.done);
+    if (activeMini) el.classList.add('has-mini-goal');
+    else if (doneMini) el.classList.add('has-mini-goal-done');
 
     el.onclick = () => selectDate(thisDate);
     grid.appendChild(el);
@@ -2526,14 +2566,16 @@ function renderCalView() {
       const activeGoalCV = goals.find(g => g.date === key && !g.done);
       const hasGoal = !!activeGoalCV;
       const hasGoalDone = !hasGoal && goals.some(g => g.date === key && g.done);
-      const hasMiniGoal = miniGoals.some(m => m.date === key);
+      const activeMiniCV = miniGoals.find(m => m.date === key && !m.done);
+      const hasMiniGoal = !!activeMiniCV;
+      const hasMiniGoalDone = !hasMiniGoal && miniGoals.some(m => m.date === key && m.done);
 
       const el = document.createElement('div');
       el.className = 'cal-day'
         + (isToday ? ' today' : '')
         + (hasEntry ? ' has-entry' : '')
         + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '')
-        + (hasMiniGoal ? ' has-mini-goal' : '');
+        + (hasMiniGoal ? ' has-mini-goal' : hasMiniGoalDone ? ' has-mini-goal-done' : '');
       if (hasGoal) el.style.setProperty('--star-color', activeGoalCV.color || '#b89a6a');
       el.innerHTML = `<span class="cal-day-num">${d}</span>`;
       if (hasEntry || hasGoal) el.onclick = () => openDayModal(key);
@@ -2878,6 +2920,17 @@ function addMiniGoal() {
   renderMiniGoals();
 }
 
+function toggleMiniGoal(id) {
+  const m = miniGoals.find(m => m.id === id);
+  if (!m) return;
+  if (!m.done) launchNotesBurst();
+  m.done = !m.done;
+  saveGoals();
+  renderCalendar();
+  if (typeof calViewMonth !== 'undefined') renderCalView();
+  renderMiniGoals();
+}
+
 function deleteMiniGoal(id) {
   miniGoals = miniGoals.filter(m => m.id !== id);
   saveGoals();
@@ -2903,15 +2956,18 @@ function renderMiniGoals() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);position:relative;';
 
-    const circle = document.createElement('div');
-    circle.style.cssText = 'flex-shrink:0;width:28px;height:28px;';
-    circle.innerHTML = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M 54,8 C 70,6 88,12 93,28 C 98,44 95,65 85,76 C 74,88 55,94 38,91 C 20,88 7,76 5,60 C 3,44 10,24 24,15 C 34,9 44,9 54,10 C 60,11 64,13 62,14" fill="none" stroke="#000000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const strokeColor = m.done ? '%23aaaaaa' : '%23000000';
+    const circle = document.createElement('button');
+    circle.title = m.done ? 'Mark undone' : 'Mark done';
+    circle.style.cssText = 'flex-shrink:0;width:32px;height:32px;background:none;border:none;padding:0;cursor:pointer;';
+    circle.innerHTML = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M 54,8 C 70,6 88,12 93,28 C 98,44 95,65 85,76 C 74,88 55,94 38,91 C 20,88 7,76 5,60 C 3,44 10,24 24,15 C 34,9 44,9 54,10 C 60,11 64,13 62,14" fill="none" stroke="${strokeColor.replace('%23','#')}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    circle.addEventListener('click', () => toggleMiniGoal(m.id));
 
     const body = document.createElement('div');
     body.style.cssText = 'flex:1;min-width:0;';
 
     const txt = document.createElement('div');
-    txt.style.cssText = 'font-size:0.88rem;color:var(--text);';
+    txt.style.cssText = `font-size:0.88rem;color:var(--text);${m.done ? 'text-decoration:line-through;opacity:0.5;' : ''}`;
     txt.textContent = m.text;
 
     const d = new Date(m.date + 'T00:00:00');
@@ -2993,6 +3049,17 @@ function applyDatePicker() {
   closeDatePicker();
   renderCalendar();
   loadJournalForDate();
+}
+
+function launchNotesBurst() {
+  const wrap = document.createElement('div');
+  wrap.className = 'mini-celebrate-wrap';
+  const img = document.createElement('img');
+  img.src = 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXpndndub2ZvOGlrN3F6OXNueWUydGowZDFwM3ZxeHFxMXdteHM3YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ePaw7nwYmSI1t389Sy/giphy.gif';
+  img.alt = '';
+  wrap.appendChild(img);
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 2700);
 }
 
 function launchFirework() {
@@ -3270,6 +3337,8 @@ window.openMiniGoalForm = openMiniGoalForm;
 window.closeMiniGoalForm = closeMiniGoalForm;
 window.addMiniGoal = addMiniGoal;
 window.deleteMiniGoal = deleteMiniGoal;
+window.toggleMiniGoal = toggleMiniGoal;
+window.launchNotesBurst = launchNotesBurst;
 window.selectGoalColor = selectGoalColor;
 window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
