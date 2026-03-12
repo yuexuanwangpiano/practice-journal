@@ -270,6 +270,39 @@
 
   .cal-day.other-month { color: var(--border); cursor: default; }
 
+  /* No-Way Day: black overlay with ✕ */
+  .cal-day.no-way-day {
+    position: relative;
+  }
+  .cal-day.no-way-day::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: rgba(0,0,0,0.82);
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .cal-day.no-way-day::after {
+    content: 'X';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 500;
+    z-index: 2;
+    pointer-events: none;
+  }
+  /* Active No-Way Day button state */
+  .add-block-fab.nwd-active {
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+    background: rgba(0,0,0,0.06);
+  }
+
   /* ---- Scrollable Content ---- */
   .content {
     flex: 1;
@@ -1037,6 +1070,23 @@
   .ycal-mini-cell.has-goal { position: relative; }
   .ycal-mini-cell.has-goal-done::before { content: '★'; position: absolute; font-size: 0.45rem; top: 0; right: 0; color: #ccc; }
   .ycal-mini-cell.has-goal-done { position: relative; }
+  .ycal-mini-cell.no-way-day {
+    position: relative;
+    background: rgba(0,0,0,0.75);
+    color: transparent;
+    border-radius: 50%;
+  }
+  .ycal-mini-cell.no-way-day::after {
+    content: 'X';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.45rem;
+    pointer-events: none;
+  }
 
   /* Month drill-down mode */
   #year-cal-body.month-mode {
@@ -1632,7 +1682,10 @@
     <!-- Journal View -->
     <div class="view active" id="view-journal">
       <div class="selected-date" id="selected-date-label" onclick="openDatePicker()" style="cursor:pointer;" title="Change date"></div>
-      <button class="add-block-fab" onclick="openBlockForm()">+ Add</button>
+      <div style="display:flex;gap:8px;margin-top:0;">
+        <button class="add-block-fab" onclick="openBlockForm()" style="flex:1;">+ Log Practice</button>
+        <button class="add-block-fab" onclick="toggleNoWayDay()" id="no-way-day-btn" style="flex:1;">x No-Way Day</button>
+      </div>
 
       <div id="blocks-list"></div>
 
@@ -2180,6 +2233,8 @@ function renderCalendar() {
     if (activeMini) el.classList.add('has-mini-goal');
     else if (doneMini) el.classList.add('has-mini-goal-done');
 
+    if (noWayDays.includes(key)) el.classList.add('no-way-day');
+
     el.onclick = () => selectDate(thisDate);
     grid.appendChild(el);
   }
@@ -2215,6 +2270,27 @@ function loadJournalForDate() {
   document.getElementById('selected-date-label').textContent = formatDateLabel(selectedDate);
   renderBlocks(entry.blocks || []);
   renderRecordings(entry.recordings || []);
+  updateNoWayDayBtn();
+}
+
+function updateNoWayDayBtn() {
+  const key = dateKey(selectedDate);
+  const btn = document.getElementById('no-way-day-btn');
+  if (!btn) return;
+  const isNWD = noWayDays.includes(key);
+  btn.textContent = isNWD ? 'x No-Way Day' : 'x No-Way Day';
+  btn.classList.toggle('nwd-active', isNWD);
+}
+
+function toggleNoWayDay() {
+  const key = dateKey(selectedDate);
+  const idx = noWayDays.indexOf(key);
+  if (idx === -1) noWayDays.push(key);
+  else noWayDays.splice(idx, 1);
+  saveGoals();
+  updateNoWayDayBtn();
+  renderCalendar();
+  if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
 }
 
 function saveBlock(index) {
@@ -2631,6 +2707,7 @@ function renderCalView() {
         if (hasEntry) cls += ' has-entry';
         if (hasGoal) cls += ' has-goal';
         else if (hasGoalDone) cls += ' has-goal-done';
+        if (noWayDays.includes(key)) cls += ' no-way-day';
         html += `<div class="${cls}">${d}</div>`;
       }
       html += `</div>`;
@@ -2754,7 +2831,8 @@ function renderCalView() {
         + (isSelected ? ' selected' : '')
         + (hasEntry ? ' has-entry' : '')
         + (hasGoal ? ' has-goal' : hasGoalDone ? ' has-goal-done' : '')
-        + (hasMiniGoal ? ' has-mini-goal' : hasMiniGoalDone ? ' has-mini-goal-done' : '');
+        + (hasMiniGoal ? ' has-mini-goal' : hasMiniGoalDone ? ' has-mini-goal-done' : '')
+        + (noWayDays.includes(key) ? ' no-way-day' : '');
       if (hasGoal) el.style.setProperty('--star-color', activeGoalCV.color || '#b89a6a');
       el.innerHTML = `<span class="cal-day-num">${d}</span>`;
       if (hasEntry) {
@@ -2965,18 +3043,20 @@ function renderAll() {
 // ---- Goals ----
 let goals = [];
 let miniGoals = [];
+let noWayDays = [];
 
 function loadGoals() {
   return getDoc(doc(db, 'users', currentUser, 'data', 'goals'))
     .then(snap => {
       goals = snap.exists() ? (snap.data().goals || []) : [];
       miniGoals = snap.exists() ? (snap.data().miniGoals || []) : [];
+      noWayDays = snap.exists() ? (snap.data().noWayDays || []) : [];
     })
-    .catch(() => { goals = []; miniGoals = []; });
+    .catch(() => { goals = []; miniGoals = []; noWayDays = []; });
 }
 
 function saveGoals() {
-  return setDoc(doc(db, 'users', currentUser, 'data', 'goals'), { goals, miniGoals })
+  return setDoc(doc(db, 'users', currentUser, 'data', 'goals'), { goals, miniGoals, noWayDays })
     .catch(e => console.error('Save goals failed', e));
 }
 
@@ -3623,6 +3703,7 @@ window.selectGoalColor = selectGoalColor;
 window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
+window.toggleNoWayDay = toggleNoWayDay;
 window.openDatePicker = openDatePicker;
 window.applyDatePicker = applyDatePicker;
 window.closeDatePicker = closeDatePicker;
