@@ -282,7 +282,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text);
-    font-size: 2.2rem;
+    font-size: 1.1rem;
     font-weight: 100;
     z-index: 2;
     pointer-events: none;
@@ -1072,7 +1072,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text);
-    font-size: 0.45rem;
+    font-size: 0.38rem;
     font-weight: 100;
     pointer-events: none;
   }
@@ -1673,7 +1673,7 @@
       <div class="selected-date" id="selected-date-label" onclick="openDatePicker()" style="cursor:pointer;" title="Change date"></div>
       <div style="display:flex;gap:8px;margin-top:0;">
         <button class="add-block-fab" onclick="openBlockForm()" style="flex:1;">+ Log Practice</button>
-        <button class="add-block-fab" onclick="toggleNoWayDay()" id="no-way-day-btn" style="flex:1;">x No-Way Day</button>
+        <button class="add-block-fab" onclick="openNoWayDaySheet()" id="no-way-day-btn" style="flex:1;">x No-Way Day</button>
       </div>
 
       <div id="blocks-list"></div>
@@ -1769,6 +1769,17 @@
       <div class="section-label" style="margin-bottom:8px;">Mini Goal</div>
       <input type="text" class="login-input" id="mini-goal-input" placeholder="e.g. Run through measures 32–48..." autocomplete="off">
       <button class="save-btn" onclick="addMiniGoal()" style="margin-top:12px;">Add Mini Goal</button>
+    </div>
+
+    <!-- No-Way Day Sheet -->
+    <div class="goal-sheet-overlay" id="nwd-sheet-overlay" onclick="closeNoWayDaySheet()"></div>
+    <div class="goal-sheet" id="nwd-sheet">
+      <div class="goal-sheet-handle"></div>
+      <div class="stats-header" style="margin-bottom:16px;">No-Way Days</div>
+      <div class="section-label" style="margin-bottom:8px;">Select Date</div>
+      <input type="date" id="nwd-date-input" class="goal-date-input" style="margin-bottom:16px;">
+      <button class="save-btn" onclick="saveNoWayDay()" style="margin-top:0;margin-bottom:24px;">Save</button>
+      <div id="nwd-list"></div>
     </div>
 
   <!-- Bottom Nav -->
@@ -2269,6 +2280,104 @@ function updateNoWayDayBtn() {
   const isNWD = noWayDays.includes(key);
   btn.textContent = isNWD ? 'x No-Way Day' : 'x No-Way Day';
   btn.classList.toggle('nwd-active', isNWD);
+}
+
+function openNoWayDaySheet() {
+  // Pre-fill with selected date
+  document.getElementById('nwd-date-input').value = dateKey(selectedDate);
+  renderNoWayDayList();
+  document.getElementById('nwd-sheet-overlay').classList.add('open');
+  document.getElementById('nwd-sheet').classList.add('open');
+}
+
+function closeNoWayDaySheet() {
+  document.getElementById('nwd-sheet-overlay').classList.remove('open');
+  document.getElementById('nwd-sheet').classList.remove('open');
+}
+
+function saveNoWayDay() {
+  const key = document.getElementById('nwd-date-input').value;
+  if (!key) return;
+  if (!noWayDays.includes(key)) {
+    noWayDays.push(key);
+    saveGoals();
+    renderCalendar();
+    if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
+  }
+  document.getElementById('nwd-date-input').value = '';
+  renderNoWayDayList();
+  updateNoWayDayBtn();
+}
+
+function deleteNoWayDay(key) {
+  noWayDays = noWayDays.filter(d => d !== key);
+  saveGoals();
+  renderNoWayDayList();
+  updateNoWayDayBtn();
+  renderCalendar();
+  if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
+}
+
+function renderNoWayDayList() {
+  const list = document.getElementById('nwd-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (noWayDays.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;text-align:center;padding:12px 0;">No no-way days yet.</div>';
+    return;
+  }
+  const sorted = [...noWayDays].sort();
+  sorted.forEach(key => {
+    const d = new Date(key + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+    const wrap = document.createElement('div');
+    wrap.className = 'goal-item-wrap';
+
+    const item = document.createElement('div');
+    item.className = 'goal-item';
+    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+
+    const dateLabel = document.createElement('div');
+    dateLabel.style.cssText = 'font-size:0.85rem;color:var(--text);';
+    dateLabel.textContent = label;
+
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'item-dots-btn';
+    dotsBtn.textContent = '⋯';
+    dotsBtn.title = 'Options';
+
+    const menu = document.createElement('div');
+    menu.className = 'dots-menu';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dots-menu-item danger';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.remove('open');
+      deleteNoWayDay(key);
+    });
+    menu.appendChild(delBtn);
+    document.body.appendChild(menu);
+
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      closeAllDotsMenus(null);
+      if (!isOpen) {
+        const r = dotsBtn.getBoundingClientRect();
+        menu.style.top = (r.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - r.right) + 'px';
+        menu.classList.add('open');
+      }
+    });
+
+    item.appendChild(dateLabel);
+    item.appendChild(dotsBtn);
+    wrap.appendChild(item);
+    list.appendChild(wrap);
+  });
 }
 
 function toggleNoWayDay() {
@@ -3693,6 +3802,10 @@ window.checkGoalDateConflict = checkGoalDateConflict;
 window.toggleGoal = toggleGoal;
 window.launchConfetti = launchConfetti;
 window.toggleNoWayDay = toggleNoWayDay;
+window.openNoWayDaySheet = openNoWayDaySheet;
+window.closeNoWayDaySheet = closeNoWayDaySheet;
+window.saveNoWayDay = saveNoWayDay;
+window.deleteNoWayDay = deleteNoWayDay;
 window.openDatePicker = openDatePicker;
 window.applyDatePicker = applyDatePicker;
 window.closeDatePicker = closeDatePicker;
