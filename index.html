@@ -935,15 +935,16 @@
   }
   .confetti-piece {
     position: absolute;
-    top: -12px;
+    top: -14px;
     border-radius: 2px;
+    will-change: transform, opacity;
     animation: confettiFall linear forwards;
-    opacity: 0.9;
+    opacity: 1;
   }
   @keyframes confettiFall {
-    0%   { transform: translateY(0)      rotateZ(0deg)   rotateX(0deg);   opacity: 1; }
-    80%  { opacity: 1; }
-    100% { transform: translateY(110vh)  rotateZ(720deg) rotateX(360deg); opacity: 0; }
+    0%   { transform: translateY(0) rotateZ(0deg) rotateX(0deg); opacity: 1; }
+    75%  { opacity: 1; }
+    100% { transform: translateY(105vh) rotateZ(600deg) rotateX(180deg); opacity: 0; }
   }
 
   .add-block-fab {
@@ -2719,7 +2720,7 @@ function renderCalView() {
     // Date-picker hint banner
     if (_datePickerReturnToLog) {
       const hint = document.createElement('div');
-      hint.style.cssText = 'text-align:center;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;';
+      hint.style.cssText = 'text-align:center;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:14px;margin-bottom:14px;';
       hint.textContent = 'Choose a date to log';
       body.appendChild(hint);
     }
@@ -3356,18 +3357,20 @@ function launchConfetti() {
   wrap.className = 'confetti-wrap';
   document.body.appendChild(wrap);
   const colors = ['#b89a6a','#2c2c2c','#c0392b','#f1c40f','#27ae60','#2980b9','#8e44ad'];
-  for (let i = 0; i < 80; i++) {
+  const count = 60;
+  for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.className = 'confetti-piece';
-    p.style.left = Math.random() * 100 + 'vw';
-    p.style.background = colors[Math.floor(Math.random() * colors.length)];
-    p.style.width = (6 + Math.random() * 6) + 'px';
-    p.style.height = (6 + Math.random() * 10) + 'px';
-    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    const size = 6 + Math.random() * 7;
+    p.style.left = (5 + Math.random() * 90) + 'vw';
+    p.style.background = colors[i % colors.length];
+    p.style.width = size + 'px';
+    p.style.height = (size * (1 + Math.random())) + 'px';
+    p.style.animationDuration = (1.8 + Math.random() * 1.4) + 's';
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
     wrap.appendChild(p);
   }
-  setTimeout(() => wrap.remove(), 3500);
+  setTimeout(() => wrap.remove(), 3200);
 }
 
 // Close any open dots menus except the given one
@@ -3405,11 +3408,6 @@ function renderGoals() {
     // Wrapper
     const wrap = document.createElement('div');
     wrap.className = 'goal-item-wrap';
-
-    // Red delete background
-    const bg = document.createElement('div');
-    bg.className = 'goal-item-delete-bg';
-    bg.textContent = 'Delete';
 
     // Goal item
     const item = document.createElement('div');
@@ -3478,62 +3476,8 @@ function renderGoals() {
     });
 
     item.appendChild(dotsBtn);
-    wrap.appendChild(bg);
     wrap.appendChild(item);
     list.appendChild(wrap);
-
-    // Swipe logic (touch only)
-    let startX = 0, currentX = 0, swiping = false;
-    const DELETE_THRESHOLD = 80;
-    const DONE_THRESHOLD = 80;
-
-    function onStart(e) {
-      if (e.type === 'mousedown' && window.matchMedia('(pointer: fine)').matches) return;
-      startX = e.touches ? e.touches[0].clientX : e.clientX;
-      currentX = 0;
-      swiping = true;
-      item.classList.add('swiping');
-    }
-    function onMove(e) {
-      if (!swiping) return;
-      const x = e.touches ? e.touches[0].clientX : e.clientX;
-      currentX = x - startX;
-      item.style.transform = `translateX(${currentX}px)`;
-      if (currentX < 0) {
-        bg.style.background = '#c0392b';
-        bg.textContent = 'Delete';
-        bg.style.left = 'auto'; bg.style.right = '0';
-      } else {
-        bg.style.background = 'var(--gold)';
-        bg.textContent = '★ Done';
-        bg.style.right = 'auto'; bg.style.left = '0';
-      }
-    }
-    function onEnd() {
-      if (!swiping) return;
-      swiping = false;
-      item.classList.remove('swiping');
-      if (currentX <= -DELETE_THRESHOLD) {
-        item.style.transition = 'transform 0.2s ease';
-        item.style.transform = `translateX(-100%)`;
-        wrap.style.transition = 'max-height 0.3s ease, opacity 0.3s ease, margin-bottom 0.3s ease';
-        wrap.style.maxHeight = wrap.offsetHeight + 'px';
-        setTimeout(() => { wrap.style.maxHeight = '0'; wrap.style.opacity = '0'; wrap.style.marginBottom = '0'; }, 150);
-        setTimeout(() => deleteGoal(g.id), 400);
-      } else if (currentX >= DONE_THRESHOLD && !g.done) {
-        item.style.transition = 'transform 0.2s ease';
-        item.style.transform = `translateX(100%)`;
-        launchConfetti();
-        setTimeout(() => { toggleGoal(g.id); }, 2800);
-      } else {
-        item.style.transition = 'transform 0.2s ease';
-        item.style.transform = 'translateX(0)';
-      }
-    }
-
-    item.addEventListener('touchstart', onStart, { passive: true });
-    item.addEventListener('touchmove', onMove, { passive: true });
-    item.addEventListener('touchend', onEnd);
   });
 }
 
