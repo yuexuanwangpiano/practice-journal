@@ -1638,6 +1638,87 @@
     font-style: italic;
   }
 
+  /* Delete confirm popup */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 28px 24px 20px;
+    width: 88%;
+    max-width: 320px;
+    text-align: center;
+  }
+  .confirm-box-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .confirm-box-body {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 22px;
+    line-height: 1.55;
+  }
+  .confirm-box-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .confirm-cancel-btn {
+    flex: 1;
+    padding: 11px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .confirm-delete-btn {
+    flex: 1;
+    padding: 11px;
+    background: #c0392b;
+    border: none;
+    color: #fff;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .confirm-delete-btn:active { background: #a93226; }
+
+  /* Profile sheet delete button */
+  .profile-delete-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px;
+    background: none;
+    border: 1px solid #e0d0d0;
+    color: #c0392b;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .profile-delete-btn:hover { background: #fdf0ee; }
+
 </style>
 </head>
 <body>
@@ -1648,7 +1729,7 @@
     <div class="header-top">
       <div class="app-title">Practice Journal</div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="login-username-label" id="header-username" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);"></span>
+        <span class="login-username-label" id="header-username" onclick="openProfileSheet()" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;"></span>
         <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
     </div>
@@ -1784,6 +1865,31 @@
       <div id="nwd-list"></div>
     </div>
 
+    <!-- Profile Sheet -->
+    <div class="goal-sheet-overlay" id="profile-sheet-overlay" onclick="closeProfileSheet()"></div>
+    <div class="goal-sheet" id="profile-sheet">
+      <div class="goal-sheet-handle"></div>
+      <div class="stats-header" id="profile-sheet-name" style="margin-bottom:20px;"></div>
+      <div class="section-label" style="margin-bottom:8px;">Feedback</div>
+      <textarea class="note-area" id="profile-feedback-input" placeholder="Share your thoughts, suggestions, or report a bug…" style="min-height:80px;margin-bottom:10px;"></textarea>
+      <button class="save-btn" onclick="sendFeedback()" style="margin-bottom:28px;">Send</button>
+      <div style="border-top:1px solid var(--border);padding-top:20px;">
+        <button class="profile-delete-btn" onclick="confirmDeleteAccount()">Delete Account</button>
+      </div>
+    </div>
+
+    <!-- Delete Account Confirm Popup -->
+    <div class="confirm-overlay" id="delete-confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-box-title">Delete Account?</div>
+        <div class="confirm-box-body">This will permanently delete all your entries, goals, and data. This cannot be undone.</div>
+        <div class="confirm-box-actions">
+          <button class="confirm-cancel-btn" onclick="closeDeleteConfirm()">Cancel</button>
+          <button class="confirm-delete-btn" onclick="deleteAccountNow()">Delete Immediately</button>
+        </div>
+      </div>
+    </div>
+
   <!-- Bottom Nav -->
   <div class="bottom-nav">
     <button class="nav-item" id="nav-cal" onclick="switchView('cal')">
@@ -1886,7 +1992,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBOrXnjslPsxFkbWJbbnMgBSyLQcnb95I8",
@@ -1980,6 +2086,67 @@ function logout() {
   document.getElementById('login-error').textContent = '';
   document.getElementById('login-screen').classList.add('visible');
   document.querySelector('.app').style.visibility = 'hidden';
+}
+
+function openProfileSheet() {
+  document.getElementById('profile-sheet-name').textContent = currentUser;
+  document.getElementById('profile-feedback-input').value = '';
+  document.getElementById('profile-sheet-overlay').classList.add('open');
+  document.getElementById('profile-sheet').classList.add('open');
+}
+
+function closeProfileSheet() {
+  document.getElementById('profile-sheet-overlay').classList.remove('open');
+  document.getElementById('profile-sheet').classList.remove('open');
+}
+
+function sendFeedback() {
+  const text = document.getElementById('profile-feedback-input').value.trim();
+  if (!text) return;
+  // Save feedback to Firestore under a feedback collection
+  const fbRef = doc(db, 'feedback', currentUser + '_' + Date.now());
+  setDoc(fbRef, { user: currentUser, message: text, ts: new Date().toISOString() })
+    .catch(e => console.error('Feedback save failed', e));
+  document.getElementById('profile-feedback-input').value = '';
+  // Show brief confirmation
+  const btn = document.querySelector('#profile-sheet .save-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'Sent ✓';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+}
+
+function confirmDeleteAccount() {
+  document.getElementById('delete-confirm-overlay').classList.add('open');
+}
+
+function closeDeleteConfirm() {
+  document.getElementById('delete-confirm-overlay').classList.remove('open');
+}
+
+async function deleteAccountNow() {
+  if (!currentUser) return;
+  const user = currentUser;
+  try {
+    // Delete all known data sub-docs
+    const dataDocs = ['entries', 'goals'];
+    for (const d of dataDocs) {
+      await deleteDoc(doc(db, 'users', user, 'data', d)).catch(() => {});
+    }
+    // Delete any extra docs in the data subcollection
+    try {
+      const snap = await getDocs(collection(db, 'users', user, 'data'));
+      for (const d of snap.docs) await deleteDoc(d.ref).catch(() => {});
+    } catch(e) {}
+    // Delete user doc itself
+    await deleteDoc(doc(db, 'users', user)).catch(() => {});
+  } catch(e) {
+    console.error('Delete account error', e);
+  }
+  // Clear local state and log out
+  closeDeleteConfirm();
+  closeProfileSheet();
+  logout();
 }
 
 function playYearAnimation(onDone) {
@@ -3818,6 +3985,12 @@ window.launchFirework = launchFirework;
 window.deleteGoal = deleteGoal;
 window.openDayModal = openDayModal;
 window.closeDayModal = closeDayModal;
+window.openProfileSheet = openProfileSheet;
+window.closeProfileSheet = closeProfileSheet;
+window.sendFeedback = sendFeedback;
+window.confirmDeleteAccount = confirmDeleteAccount;
+window.closeDeleteConfirm = closeDeleteConfirm;
+window.deleteAccountNow = deleteAccountNow;
 
 
 
