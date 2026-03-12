@@ -1240,8 +1240,7 @@
     padding-bottom: calc(32px + env(safe-area-inset-bottom));
     z-index: 900;
     transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    max-height: 96dvh;
-    min-height: 70dvh;
+    max-height: 92vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -2097,8 +2096,10 @@ function openProfileSheet() {
 }
 
 function closeProfileSheet() {
+  const sheet = document.getElementById('profile-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
   document.getElementById('profile-sheet-overlay').classList.remove('open');
-  document.getElementById('profile-sheet').classList.remove('open');
 }
 
 function sendFeedback() {
@@ -2461,8 +2462,10 @@ function openNoWayDaySheet() {
 }
 
 function closeNoWayDaySheet() {
+  const sheet = document.getElementById('nwd-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
   document.getElementById('nwd-sheet-overlay').classList.remove('open');
-  document.getElementById('nwd-sheet').classList.remove('open');
 }
 
 function saveNoWayDay() {
@@ -2472,7 +2475,7 @@ function saveNoWayDay() {
     noWayDays.push(key);
     saveGoals();
     renderCalendar();
-    if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
+    if (calViewMonth !== null) renderCalView();
   }
   document.getElementById('nwd-date-input').value = '';
   renderNoWayDayList();
@@ -2485,7 +2488,7 @@ function deleteNoWayDay(key) {
   renderNoWayDayList();
   updateNoWayDayBtn();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
+  if (calViewMonth !== null) renderCalView();
 }
 
 function renderNoWayDayList() {
@@ -2560,7 +2563,7 @@ function toggleNoWayDay() {
   saveGoals();
   updateNoWayDayBtn();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined' && calViewMonth !== null) renderCalView();
+  if (calViewMonth !== null) renderCalView();
 }
 
 function saveBlock(index) {
@@ -3476,7 +3479,7 @@ function addGoal() {
   document.querySelectorAll('.goal-color-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
   closeGoalForm();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined') renderCalView();
+  if (calViewMonth !== null) renderCalView();
   renderGoals();
   renderMiniGoals();
 }
@@ -3506,8 +3509,10 @@ function openMiniGoalForm(editId) {
 
 function closeMiniGoalForm() {
   _editingMiniGoalId = null;
+  const sheet = document.getElementById('mini-goal-sheet');
+  sheet.classList.remove('open');
+  sheet.style.bottom = '';
   document.getElementById('mini-goal-sheet-overlay').classList.remove('open');
-  document.getElementById('mini-goal-sheet').classList.remove('open');
   document.getElementById('mini-goal-input').value = '';
   document.getElementById('mini-goal-date').value = '';
 }
@@ -3528,7 +3533,7 @@ function addMiniGoal() {
   saveGoals();
   closeMiniGoalForm();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined') renderCalView();
+  if (calViewMonth !== null) renderCalView();
   renderMiniGoals();
 }
 
@@ -3539,7 +3544,7 @@ function toggleMiniGoal(id) {
   m.done = !m.done;
   saveGoals();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined') renderCalView();
+  if (calViewMonth !== null) renderCalView();
   renderMiniGoals();
 }
 
@@ -3547,7 +3552,7 @@ function deleteMiniGoal(id) {
   miniGoals = miniGoals.filter(m => m.id !== id);
   saveGoals();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined') renderCalView();
+  if (calViewMonth !== null) renderCalView();
   renderMiniGoals();
 }
 
@@ -3651,14 +3656,14 @@ function renderMiniGoals() {
 
 function toggleGoal(id) {
   const g = goals.find(g => g.id === id);
-  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); if (typeof calViewMonth !== 'undefined') renderCalView(); renderGoals(); renderMiniGoals(); }
+  if (g) { g.done = !g.done; saveGoals(); renderCalendar(); if (calViewMonth !== null) renderCalView(); renderGoals(); renderMiniGoals(); }
 }
 
 function deleteGoal(id) {
   goals = goals.filter(g => g.id !== id);
   saveGoals();
   renderCalendar();
-  if (typeof calViewMonth !== 'undefined') renderCalView();
+  if (calViewMonth !== null) renderCalView();
   renderGoals();
   renderMiniGoals();
 }
@@ -3936,15 +3941,19 @@ function renderGoals() {
   });
 }
 
-// ---- iOS keyboard: shift sheets above keyboard ----
+// ---- iOS keyboard: scroll active input into view instead of shifting sheet ----
 function setupKeyboardShift() {
   if (!window.visualViewport) return;
   window.visualViewport.addEventListener('resize', () => {
-    const sheets = document.querySelectorAll('.goal-sheet.open');
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+      setTimeout(() => active.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 50);
+    }
+    // Reset any inline bottom offsets when keyboard closes
     const keyboardHeight = window.innerHeight - window.visualViewport.height;
-    sheets.forEach(sheet => {
-      sheet.style.bottom = keyboardHeight > 50 ? keyboardHeight + 'px' : '';
-    });
+    if (keyboardHeight < 50) {
+      document.querySelectorAll('.goal-sheet').forEach(s => s.style.bottom = '');
+    }
   });
 }
 setupKeyboardShift();
