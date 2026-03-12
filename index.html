@@ -1240,8 +1240,8 @@
     padding-bottom: calc(40px + env(safe-area-inset-bottom));
     z-index: 900;
     transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    min-height: 60svh;
-    max-height: 92svh;
+    height: var(--sheet-max-h, 82svh);
+    max-height: var(--sheet-max-h, 82svh);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
@@ -2280,6 +2280,8 @@ async function showApp() {
     renderCalendar();
     loadJournalForDate();
   }
+  // Recalculate sheet height after header fully renders
+  requestAnimationFrame(() => { requestAnimationFrame(updateSheetHeight); });
 }
 
 async function checkSession() {
@@ -3959,6 +3961,17 @@ function setupKeyboardShift() {
   });
 }
 setupKeyboardShift();
+
+// Set sheet height so its top aligns with the bottom of the header
+function updateSheetHeight() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+  const headerBottom = header.getBoundingClientRect().bottom;
+  const available = window.innerHeight - headerBottom;
+  document.documentElement.style.setProperty('--sheet-max-h', Math.max(available, 200) + 'px');
+}
+updateSheetHeight();
+window.addEventListener('resize', updateSheetHeight);
 
 // ---- Init ----
 document.getElementById('login-pin').addEventListener('keydown', e => {
