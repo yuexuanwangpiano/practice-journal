@@ -830,25 +830,29 @@
   }
 
 
-  /* ---- Mini Goal celebration: confetti cannon GIF ---- */
+  /* ---- Mini Goal celebration: confetti rain ---- */
   .mini-celebrate-wrap {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
     z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: celebrateFadeOut 0.4s ease-in 2.2s forwards;
+    overflow: hidden;
   }
-  .mini-celebrate-wrap img {
-    width: min(320px, 80vw);
-    height: auto;
+  .mconfetti-piece {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    border-radius: var(--br);
+    width: var(--w);
+    height: var(--h);
+    background: var(--c);
+    animation: mconfettiFall var(--dur) ease-in var(--delay) forwards;
   }
-  @keyframes celebrateFadeOut {
-    from { opacity: 1; }
-    to   { opacity: 0; }
+  @keyframes mconfettiFall {
+    0%   { transform: translateX(var(--x0)) translateY(0)     rotate(0deg)          scale(1);   opacity: 1; }
+    75%  { opacity: 1; }
+    100% { transform: translateX(var(--x1)) translateY(105vh) rotate(var(--rot))     scale(0.8); opacity: 0; }
   }
 
   /* ---- Fireworks ---- */
@@ -3061,12 +3065,33 @@ function applyDatePicker() {
 function launchNotesBurst() {
   const wrap = document.createElement('div');
   wrap.className = 'mini-celebrate-wrap';
-  const img = document.createElement('img');
-  img.src = 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXpndndub2ZvOGlrN3F6OXNueWUydGowZDFwM3ZxeHFxMXdteHM3YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ePaw7nwYmSI1t389Sy/giphy.gif';
-  img.alt = '';
-  wrap.appendChild(img);
   document.body.appendChild(wrap);
-  setTimeout(() => wrap.remove(), 2700);
+
+  const colors = ['#f1c40f','#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800','#00bcd4','#fff176','#f48fb1'];
+  const shapes = [
+    { w: '7px',  h: '7px',  br: '50%' },
+    { w: '10px', h: '5px',  br: '1px' },
+    { w: '5px',  h: '13px', br: '1px' },
+    { w: '9px',  h: '9px',  br: '1px' },
+    { w: '11px', h: '4px',  br: '2px' },
+  ];
+
+  const count = 90;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'mconfetti-piece';
+    const sh = shapes[Math.floor(Math.random() * shapes.length)];
+    const c  = colors[Math.floor(Math.random() * colors.length)];
+    const x0 = (Math.random() * 110 - 5) + 'vw';
+    const x1 = (Math.random() * 110 - 5) + 'vw';
+    const rot = ((Math.random() - 0.5) * 900).toFixed(0) + 'deg';
+    const dur = (1.4 + Math.random() * 1.2).toFixed(2) + 's';
+    const delay = (Math.random() * 0.6).toFixed(2) + 's';
+    p.style.cssText = `--w:${sh.w};--h:${sh.h};--br:${sh.br};--c:${c};--x0:${x0};--x1:${x1};--rot:${rot};--dur:${dur};--delay:${delay};`;
+    wrap.appendChild(p);
+  }
+
+  setTimeout(() => wrap.remove(), 3000);
 }
 
 function launchFirework() {
