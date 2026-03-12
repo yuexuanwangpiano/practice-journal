@@ -2380,8 +2380,7 @@ function renderCalendar() {
       const ent = entries[key];
       if (ent) {
         const blockCount = (ent.blocks || []).filter(b => b.note || b.piece).length;
-        const recCount   = (ent.recordings || []).length;
-        const dotCount   = Math.min(blockCount + recCount, 4); // cap at 4 dots
+        const dotCount   = Math.min(blockCount, 4); // dots = practice entries only
         if (dotCount > 0) {
           el.classList.add('has-entry');
           const dotsWrap = document.createElement('div');
@@ -3118,7 +3117,7 @@ function renderCalView() {
       el.innerHTML = `<span class="cal-day-num">${d}</span>`;
       if (hasEntry) {
         const ent = entries[key];
-        const dotCount = Math.min((ent.blocks || []).filter(b => b.note || b.piece).length + (ent.recordings || []).length, 4);
+        const dotCount = Math.min((ent.blocks || []).filter(b => b.note || b.piece).length, 4);
         if (dotCount > 0) {
           const dotsWrap = document.createElement('div');
           dotsWrap.className = 'entry-dots';
