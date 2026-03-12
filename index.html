@@ -1693,11 +1693,9 @@
     <div class="view" id="view-goals">
       <div class="stats-header">Goals</div>
       <div id="goals-list"></div>
-      <div style="display:flex;gap:8px;padding:0 0 12px;">
-        <button class="add-goal-fab" onclick="openGoalForm()" style="flex:1;">+ Add a Goal</button>
-        <button class="add-goal-fab" onclick="openMiniGoalForm()" style="flex:1;font-size:0.68rem;">+ Add a Mini Goal</button>
-      </div>
+      <button class="add-goal-fab" onclick="openGoalForm()" style="width:100%;margin-bottom:8px;">+ Add a Goal</button>
       <div id="mini-goals-list"></div>
+      <button class="add-goal-fab" onclick="openMiniGoalForm()" style="width:100%;margin-top:8px;">+ Add a Mini Goal</button>
     </div>
 
     <!-- Calendar View -->
@@ -2664,15 +2662,14 @@ function renderCalView() {
     body.className = 'year-cal-body month-mode';
     body.innerHTML = '';
 
-    // Header row: [‹ 2026] [‹] [   March   ] [›]
-    const monthRow = document.createElement('div');
-    monthRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:0 2px;margin-bottom:10px;';
+    // Row 1: back-to-year button (left-aligned)
+    const backRow = document.createElement('div');
+    backRow.style.cssText = 'display:flex;align-items:center;padding:0 2px;margin-bottom:4px;';
 
-    // Back-to-year button (far left)
     const backBtn = document.createElement('button');
     backBtn.id = 'ycal-header-back';
     backBtn.className = 'ycal-back-btn';
-    backBtn.style.cssText = 'padding:0;margin:0;min-width:48px;text-align:left;';
+    backBtn.style.cssText = 'padding:0;margin:0;';
     backBtn.innerHTML = '‹ ' + calViewYear;
     backBtn.onclick = () => {
       header.style.display = '';
@@ -2683,11 +2680,16 @@ function renderCalView() {
         calViewMonth = null; renderCalView();
       }
     };
+    backRow.appendChild(backBtn);
+    body.appendChild(backRow);
 
-    // Prev-month arrow
+    // Row 2: [‹]  March  [›] centered
+    const monthRow = document.createElement('div');
+    monthRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;';
+
     const prevBtn = document.createElement('button');
     prevBtn.className = 'year-cal-arrow';
-    prevBtn.style.cssText = 'font-size:1.3rem;padding:0 8px;';
+    prevBtn.style.cssText = 'font-size:1.3rem;padding:0 6px;';
     prevBtn.textContent = '‹';
     prevBtn.onclick = () => {
       if (calViewMonth === 0) { calViewMonth = 11; calViewYear--; }
@@ -2695,15 +2697,13 @@ function renderCalView() {
       renderCalView();
     };
 
-    // Month name (center)
     const monthLabel = document.createElement('div');
-    monthLabel.style.cssText = 'font-family:"Cormorant Garamond",serif;font-size:1.55rem;font-weight:400;letter-spacing:0.06em;color:var(--text);flex:1;text-align:center;';
+    monthLabel.style.cssText = 'font-family:"Cormorant Garamond",serif;font-size:1.55rem;font-weight:400;letter-spacing:0.06em;color:var(--text);min-width:140px;text-align:center;';
     monthLabel.textContent = MONTHS_FULL[calViewMonth];
 
-    // Next-month arrow
     const nextBtn = document.createElement('button');
     nextBtn.className = 'year-cal-arrow';
-    nextBtn.style.cssText = 'font-size:1.3rem;padding:0 8px;';
+    nextBtn.style.cssText = 'font-size:1.3rem;padding:0 6px;';
     nextBtn.textContent = '›';
     nextBtn.onclick = () => {
       if (calViewMonth === 11) { calViewMonth = 0; calViewYear++; }
@@ -2711,7 +2711,6 @@ function renderCalView() {
       renderCalView();
     };
 
-    monthRow.appendChild(backBtn);
     monthRow.appendChild(prevBtn);
     monthRow.appendChild(monthLabel);
     monthRow.appendChild(nextBtn);
@@ -3161,8 +3160,8 @@ function renderMiniGoals() {
   if (miniGoals.length === 0) return;
 
   const header = document.createElement('div');
-  header.className = 'section-label';
-  header.style.cssText = 'margin-bottom:8px;margin-top:16px;';
+  header.className = 'stats-header';
+  header.style.cssText = 'margin-top:16px;';
   header.textContent = 'Mini Goals';
   list.appendChild(header);
 
