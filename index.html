@@ -2614,7 +2614,10 @@ function renderCalView() {
   const now = new Date();
 
   if (calViewMonth === null) {
-    // ---- Year mode ----
+    // ---- Year mode ---- (clean up any lingering month-mode back button)
+    document.getElementById('ycal-header-back')?.remove();
+    const hdr = document.getElementById('year-cal-title')?.closest('.year-cal-header');
+    hdr?.querySelectorAll('.year-cal-arrow').forEach(a => a.style.visibility = '');
     title.textContent = calViewYear;
     body.className = 'year-cal-body year-mode';
     body.innerHTML = '';
@@ -2649,30 +2652,40 @@ function renderCalView() {
       body.appendChild(card);
     }
   } else {
-    // ---- Month drill-down mode — same layout as Log/Goals calendar ----
+    // ---- Month drill-down mode ----
     title.textContent = `${MONTHS_FULL[calViewMonth]} ${calViewYear}`;
     body.className = 'year-cal-body month-mode';
     body.innerHTML = '';
 
-    // Back button
-    const back = document.createElement('button');
-    back.className = 'ycal-back-btn';
-    back.innerHTML = '‹ ' + calViewYear;
-    back.onclick = () => {
+    // Back button goes ABOVE the ‹ title › header row
+    const header = document.getElementById('year-cal-title').closest('.year-cal-header');
+    header.querySelectorAll('.year-cal-arrow').forEach(a => a.style.visibility = 'hidden');
+    let backBtn = document.getElementById('ycal-header-back');
+    if (!backBtn) {
+      backBtn = document.createElement('button');
+      backBtn.id = 'ycal-header-back';
+      backBtn.className = 'ycal-back-btn';
+      backBtn.style.marginBottom = '4px';
+      header.parentElement.insertBefore(backBtn, header);
+    }
+    backBtn.style.display = 'block';
+    backBtn.innerHTML = '‹ ' + calViewYear;
+    backBtn.onclick = () => {
       if (_datePickerReturnToLog) {
         _datePickerReturnToLog = false;
+        document.getElementById('ycal-header-back')?.remove();
+        header.querySelectorAll('.year-cal-arrow').forEach(a => a.style.visibility = '');
         switchView('journal');
       } else {
         calViewMonth = null; renderCalView();
       }
     };
-    body.appendChild(back);
 
     // Date-picker hint banner
     if (_datePickerReturnToLog) {
       const hint = document.createElement('div');
       hint.style.cssText = 'text-align:center;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;';
-      hint.textContent = 'Tap a date to go to Log';
+      hint.textContent = 'Choose a date to log';
       body.appendChild(hint);
     }
 
