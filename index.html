@@ -270,18 +270,9 @@
 
   .cal-day.other-month { color: var(--border); cursor: default; }
 
-  /* No-Way Day: black overlay with ✕ */
+  /* No-Way Day: X mark only */
   .cal-day.no-way-day {
     position: relative;
-  }
-  .cal-day.no-way-day::before {
-    content: '';
-    position: absolute;
-    inset: 1px;
-    background: rgba(0,0,0,0.82);
-    border-radius: 50%;
-    z-index: 1;
-    pointer-events: none;
   }
   .cal-day.no-way-day::after {
     content: 'X';
@@ -290,9 +281,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 0.68rem;
-    font-weight: 500;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
     z-index: 2;
     pointer-events: none;
   }
@@ -1072,9 +1063,6 @@
   .ycal-mini-cell.has-goal-done { position: relative; }
   .ycal-mini-cell.no-way-day {
     position: relative;
-    background: rgba(0,0,0,0.75);
-    color: transparent;
-    border-radius: 50%;
   }
   .ycal-mini-cell.no-way-day::after {
     content: 'X';
@@ -1083,8 +1071,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 0.45rem;
+    color: var(--text);
+    font-size: 0.6rem;
+    font-weight: 700;
     pointer-events: none;
   }
 
