@@ -289,9 +289,9 @@
   }
   /* Active No-Way Day button state */
   .add-block-fab.nwd-active {
+    background: #1a1a1a;
     border-color: #1a1a1a;
-    color: #1a1a1a;
-    background: rgba(0,0,0,0.06);
+    color: #fff;
   }
 
   /* ---- Scrollable Content ---- */
@@ -1692,9 +1692,11 @@
     <div class="goal-sheet-overlay" id="block-sheet-overlay" onclick="closeBlockForm()"></div>
     <div class="goal-sheet" id="block-sheet">
       <div class="goal-sheet-handle"></div>
-      <div class="section-label" style="margin-bottom:6px;">Piece</div>
+      <div class="section-label" style="margin-bottom:6px;">Select Date</div>
+      <input type="date" id="block-sheet-date" class="goal-date-input" style="margin-bottom:16px;">
+      <div class="section-label" style="margin-bottom:6px;">Composer &amp; Piece</div>
       <input type="text" class="login-input" id="block-sheet-piece" placeholder="e.g. Chopin Ballade No. 1..." autocomplete="off">
-      <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Practice Notes</div>
+      <div class="section-label" style="margin-top:16px; margin-bottom:6px;">Notes</div>
       <textarea class="note-area" id="block-sheet-note" placeholder="What did you work on? Techniques, breakthroughs..." style="min-height:60px;"></textarea>
       <div id="block-sheet-actions" style="display:flex;gap:8px;margin-top:12px;">
         <button id="block-sheet-delete" onclick="deleteBlockFromSheet()" style="display:none;flex:1;padding:11px;background:none;border:1px solid #e0d0d0;color:#c0392b;font-family:'Jost',sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Remove</button>
@@ -3164,6 +3166,7 @@ function openBlockForm(index = null) {
   editingBlockIndex = index;
   const entry = getEntry(selectedDate);
   const data = index !== null ? (entry.blocks?.[index] || {}) : {};
+  document.getElementById('block-sheet-date').value = data.date || dateKey(selectedDate);
   document.getElementById('block-sheet-piece').value = data.piece || '';
   document.getElementById('block-sheet-note').value = data.note || '';
   // Show/hide delete button
@@ -3187,20 +3190,22 @@ function saveBlockFromSheet() {
   const note = document.getElementById('block-sheet-note').value.trim();
   if (!piece && !note) return;
 
-  const saveDate = selectedDate;
+  const pickedDateStr = document.getElementById('block-sheet-date').value;
+  const saveDate = pickedDateStr ? new Date(pickedDateStr + 'T00:00:00') : selectedDate;
 
   const entry = getEntry(saveDate);
   if (!entry.blocks) entry.blocks = [];
   const isNew = editingBlockIndex === null;
   if (!isNew) {
-    entry.blocks[editingBlockIndex] = { piece, note, saved: true };
+    entry.blocks[editingBlockIndex] = { piece, note, date: dateKey(saveDate), saved: true };
   } else {
-    entry.blocks.push({ piece, note, saved: true });
+    entry.blocks.push({ piece, note, date: dateKey(saveDate), saved: true });
   }
-  setEntry(selectedDate, entry);
+  setEntry(saveDate, entry);
   closeBlockForm();
   renderCalendar();
-  renderBlocks(entry.blocks);
+  // Reload journal for currently selected date
+  loadJournalForDate();
   if (isNew) launchFirework();
 }
 
