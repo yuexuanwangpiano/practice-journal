@@ -2724,12 +2724,15 @@ let miniGoals = [];
 
 function loadGoals() {
   return getDoc(doc(db, 'users', currentUser, 'data', 'goals'))
-    .then(snap => { goals = snap.exists() ? (snap.data().goals || []) : []; })
-    .catch(() => { goals = []; });
+    .then(snap => {
+      goals = snap.exists() ? (snap.data().goals || []) : [];
+      miniGoals = snap.exists() ? (snap.data().miniGoals || []) : [];
+    })
+    .catch(() => { goals = []; miniGoals = []; });
 }
 
 function saveGoals() {
-  return setDoc(doc(db, 'users', currentUser, 'data', 'goals'), { goals })
+  return setDoc(doc(db, 'users', currentUser, 'data', 'goals'), { goals, miniGoals })
     .catch(e => console.error('Save goals failed', e));
 }
 
