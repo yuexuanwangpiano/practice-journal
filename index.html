@@ -1817,7 +1817,7 @@
       <div class="section-gap">
         <div class="section-label">Recordings</div>
         <div class="rec-link-row">
-          <input type="url" class="login-input" id="rec-link-input" placeholder="Paste a link (YouTube, SoundCloud, Drive…)" autocomplete="off" inputmode="url">
+          <input type="url" class="login-input" id="rec-link-input" placeholder="Paste a link (YouTube, Google Drive…)" autocomplete="off" inputmode="url">
           <button class="rec-link-add-btn" onclick="addRecordingLink()">Add</button>
         </div>
         <div class="recordings-list" id="recordings-list"></div>
@@ -2883,6 +2883,15 @@ function renderRecordings(recordings) {
     menu.className = 'dots-menu';
     menu.dataset.scope = 'recordings';
 
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'dots-menu-item';
+    renameBtn.textContent = 'Rename';
+    renameBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.remove('open');
+      renameRecording(i);
+    });
+
     const delBtn = document.createElement('button');
     delBtn.className = 'dots-menu-item danger';
     delBtn.textContent = 'Delete';
@@ -2891,6 +2900,7 @@ function renderRecordings(recordings) {
       menu.classList.remove('open');
       deleteRecording(i);
     });
+    menu.appendChild(renameBtn);
     menu.appendChild(delBtn);
     document.body.appendChild(menu);
 
@@ -2959,6 +2969,16 @@ function deleteRecording(i) {
   entry.recordings.splice(i, 1);
   setEntry(selectedDate, entry);
   renderCalendar();
+  renderRecordings(entry.recordings);
+}
+
+function renameRecording(i) {
+  const entry = getEntry(selectedDate);
+  const rec = entry.recordings[i];
+  const newName = prompt('Rename recording:', rec.name || '');
+  if (newName === null) return; // cancelled
+  rec.name = newName.trim() || rec.url;
+  setEntry(selectedDate, entry);
   renderRecordings(entry.recordings);
 }
 
@@ -4153,6 +4173,7 @@ window.addBlock = addBlock;
 window.saveBlock = saveBlock;
 window.deleteBlock = deleteBlock;
 window.deleteRecording = deleteRecording;
+window.renameRecording = renameRecording;
 window.addRecordingLink = addRecordingLink;
 window.addGoal = addGoal;
 window.openMiniGoalForm = openMiniGoalForm;
