@@ -1164,19 +1164,14 @@
     border-top: 1px solid var(--border);
     padding-top: 16px;
   }
-
-  /* Base row */
   .ycal-entry-item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
-    cursor: default;
   }
   .ycal-entry-item:last-child { border-bottom: none; }
-
-  /* Day number — left (practice-only) */
   .ycal-entry-day {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.4rem;
@@ -1187,14 +1182,12 @@
     line-height: 1;
     flex-shrink: 0;
   }
-
-  /* Detail column (practice side) */
   .ycal-entry-detail {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
   }
   .ycal-entry-weekday {
     font-size: 0.6rem;
@@ -1202,9 +1195,24 @@
     text-transform: uppercase;
     color: var(--muted);
   }
-  .ycal-entry-weekday.right { text-align: right; }
-
-  /* Practice pieces */
+  .ycal-goal-tag {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ycal-goal-tag .ycal-goal-star { margin-right: 3px; }
+  .ycal-mini-tag {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ycal-goal-done-tag { opacity: 0.4; text-decoration: line-through; }
   .ycal-entry-pieces {
     font-family: 'Cormorant Garamond', serif;
     font-size: 0.95rem;
@@ -1215,49 +1223,6 @@
     cursor: pointer;
   }
   .ycal-entry-pieces:hover { color: var(--accent); }
-
-  /* Goals column — right side when goals present */
-  .ycal-entry-goals-col {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
-    min-width: 0;
-    flex: 1;
-  }
-  .ycal-goal-tag {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 0.88rem;
-    color: var(--text);
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  .ycal-goal-tag .ycal-goal-star { margin-right: 3px; }
-  .ycal-mini-tag {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  .ycal-goal-done-tag { opacity: 0.4; text-decoration: line-through; }
-
-  /* Day number — right side (when goals present) */
-  .ycal-entry-day-right {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.4rem;
-    font-weight: 300;
-    color: var(--muted);
-    min-width: 28px;
-    text-align: center;
-    line-height: 1;
-    flex-shrink: 0;
-  }
 
   /* ---- Add Goal Button & Sheet ---- */
   .add-goal-fab {
@@ -3233,54 +3198,23 @@ function renderCalView() {
           const item = document.createElement('div');
           item.className = 'ycal-entry-item';
 
-          if (!hasGoals) {
-            // ── Practice only: [day# LEFT] [weekday + pieces] ──
-            const dayEl = document.createElement('div');
-            dayEl.className = 'ycal-entry-day';
-            dayEl.textContent = d;
+          // Left: day number
+          const dayEl = document.createElement('div');
+          dayEl.className = 'ycal-entry-day';
+          dayEl.textContent = d;
 
-            const detail = document.createElement('div');
-            detail.className = 'ycal-entry-detail';
+          // Right: stacked detail
+          const detail = document.createElement('div');
+          detail.className = 'ycal-entry-detail';
 
-            const weekdayEl = document.createElement('div');
-            weekdayEl.className = 'ycal-entry-weekday';
-            weekdayEl.textContent = date.toLocaleDateString('en-US', { weekday: 'long' });
-            detail.appendChild(weekdayEl);
+          // Row 1: weekday
+          const weekdayEl = document.createElement('div');
+          weekdayEl.className = 'ycal-entry-weekday';
+          weekdayEl.textContent = date.toLocaleDateString('en-US', { weekday: 'long' });
+          detail.appendChild(weekdayEl);
 
-            if (hasEnt) {
-              const piecesEl = document.createElement('div');
-              piecesEl.className = 'ycal-entry-pieces';
-              piecesEl.textContent = pieces.length ? pieces.join(' · ') : entry.recordings?.length ? '🎵 Recording' : '—';
-              piecesEl.onclick = () => openDayModal(key);
-              detail.appendChild(piecesEl);
-            }
-
-            item.appendChild(dayEl);
-            item.appendChild(detail);
-
-          } else {
-            // ── Has goals: [practice LEFT] [goals RIGHT] [day# + weekday RIGHT] ──
-
-            // Left: practice detail (only if exists)
-            if (hasEnt) {
-              const detail = document.createElement('div');
-              detail.className = 'ycal-entry-detail';
-              const piecesEl = document.createElement('div');
-              piecesEl.className = 'ycal-entry-pieces';
-              piecesEl.textContent = pieces.length ? pieces.join(' · ') : entry.recordings?.length ? '🎵 Recording' : '—';
-              piecesEl.onclick = () => openDayModal(key);
-              detail.appendChild(piecesEl);
-              item.appendChild(detail);
-            } else {
-              // spacer so goals push right
-              const spacer = document.createElement('div');
-              spacer.style.flex = '1';
-              item.appendChild(spacer);
-            }
-
-            // Goals column right-aligned
-            const goalsCol = document.createElement('div');
-            goalsCol.className = 'ycal-entry-goals-col';
+          // Row 2: goals + mini goals
+          if (hasGoals) {
             dayGoals.forEach(g => {
               const tag = document.createElement('div');
               tag.className = 'ycal-goal-tag' + (g.done ? ' ycal-goal-done-tag' : '');
@@ -3290,30 +3224,31 @@ function renderCalView() {
               star.style.color = g.done ? '#ccc' : (g.color || '#F4722B');
               tag.appendChild(star);
               tag.appendChild(document.createTextNode(g.text));
-              goalsCol.appendChild(tag);
+              detail.appendChild(tag);
             });
             dayMinis.forEach(m => {
               const tag = document.createElement('div');
               tag.className = 'ycal-mini-tag' + (m.done ? ' ycal-goal-done-tag' : '');
-              tag.textContent = '◦ ' + m.text;
-              goalsCol.appendChild(tag);
+              const circle = document.createElement('span');
+              circle.textContent = '◦ ';
+              circle.style.color = 'var(--text)';
+              tag.appendChild(circle);
+              tag.appendChild(document.createTextNode(m.text));
+              detail.appendChild(tag);
             });
-            item.appendChild(goalsCol);
-
-            // Day number + weekday — right column
-            const rightCol = document.createElement('div');
-            rightCol.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;';
-            const dayEl = document.createElement('div');
-            dayEl.className = 'ycal-entry-day-right';
-            dayEl.textContent = d;
-            const weekdayEl = document.createElement('div');
-            weekdayEl.className = 'ycal-entry-weekday right';
-            weekdayEl.textContent = date.toLocaleDateString('en-US', { weekday: 'long' });
-            rightCol.appendChild(dayEl);
-            rightCol.appendChild(weekdayEl);
-            item.appendChild(rightCol);
           }
 
+          // Row 3: practice pieces
+          if (hasEnt) {
+            const piecesEl = document.createElement('div');
+            piecesEl.className = 'ycal-entry-pieces';
+            piecesEl.textContent = pieces.length ? pieces.join(' · ') : entry.recordings?.length ? '🎵 Recording' : '—';
+            piecesEl.onclick = () => openDayModal(key);
+            detail.appendChild(piecesEl);
+          }
+
+          item.appendChild(dayEl);
+          item.appendChild(detail);
           list.appendChild(item);
         });
 
