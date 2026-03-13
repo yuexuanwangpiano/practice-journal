@@ -1618,6 +1618,33 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
+    cursor: pointer;
+  }
+  /* Video preview card */
+  .day-modal-rec-thumb {
+    position: relative;
+    width: 80px;
+    height: 45px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #000;
+  }
+  .day-modal-rec-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .day-modal-rec-thumb-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    font-size: 1.1rem;
   }
   .day-modal-play-btn {
     width: 32px;
@@ -3321,22 +3348,36 @@ function openDayModal(key) {
     entry.recordings.forEach(rec => {
       const item = document.createElement('div');
       item.className = 'day-modal-rec-item';
+      item.addEventListener('click', () => openVideoModal(rec.url));
 
-      const icon = document.createElement('span');
-      icon.textContent = '🔗';
-      icon.style.cssText = 'opacity:0.45;flex-shrink:0;font-size:1rem;';
+      const ytId = getYouTubeId(rec.url);
 
-      const link = document.createElement('a');
-      link.className = 'day-modal-rec-name';
-      link.href = rec.url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = rec.name || rec.url;
-      link.style.cssText = 'color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;font-size:0.8rem;';
+      if (ytId) {
+        // YouTube thumbnail preview
+        const thumb = document.createElement('div');
+        thumb.className = 'day-modal-rec-thumb';
+        const img = document.createElement('img');
+        img.src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+        img.alt = '';
+        const playOverlay = document.createElement('div');
+        playOverlay.className = 'day-modal-rec-thumb-play';
+        playOverlay.textContent = '▶';
+        thumb.appendChild(img);
+        thumb.appendChild(playOverlay);
+        item.appendChild(thumb);
+      } else {
+        const icon = document.createElement('span');
+        icon.textContent = '🔗';
+        icon.style.cssText = 'opacity:0.45;flex-shrink:0;font-size:1rem;';
+        item.appendChild(icon);
+      }
 
-      item.style.cssText = 'display:flex;align-items:center;gap:8px;';
-      item.appendChild(icon);
-      item.appendChild(link);
+      const name = document.createElement('div');
+      name.className = 'day-modal-rec-name';
+      name.textContent = rec.name || rec.url;
+      name.style.cssText = 'color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;font-size:0.8rem;';
+      item.appendChild(name);
+
       recSection.appendChild(item);
     });
 
