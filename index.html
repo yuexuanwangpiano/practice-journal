@@ -170,6 +170,10 @@
 
   .cal-day:hover { background: var(--soft); }
   .cal-day.empty { cursor: default; }
+  /* In calendar view, days are not clickable — no hover, no tap highlight */
+  #view-cal .cal-day { cursor: default; -webkit-tap-highlight-color: transparent; }
+  #view-cal .cal-day:hover { background: transparent; }
+  #view-cal .cal-day:active { background: transparent; }
   .cal-day.today { font-weight: 500; }
   .cal-day.selected { background: var(--accent); color: #fff; }
   .cal-day.selected:hover { background: var(--accent); }
@@ -3226,9 +3230,8 @@ function renderCalView() {
           selectedDate = new Date(key + 'T00:00:00');
           currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
           switchView('journal');
-        } else if (hasEntry || hasGoal) {
-          openDayModal(key);
         }
+        // no action in calendar view — day modal removed
       };
       grid.appendChild(el);
     }
